@@ -90,3 +90,77 @@ def enhance_contrast_and_binarize(
     except Exception as e:
         logger.debug("Contrast enhancement fallback: %s", e)
         return image_bytes
+
+
+def enhance_handwritten_strokes(
+    image_bytes: bytes,
+) -> bytes:
+    """
+    Apply specialized stroke-enhancement, background bleed-through reduction,
+    and adaptive binarization tailored for freehand cursive and ballpoint/ink writing.
+    """
+    try:
+        from PIL import Image, ImageEnhance, ImageFilter, ImageOps
+        img = Image.open(io.BytesIO(image_bytes)).convert("L")
+
+        # 1. Expand dynamic range (auto-contrast)
+        img = ImageOps.autocontrast(img, cutoff=2)
+
+        # 2. Sharpen cursive ink trails
+        img = img.filter(ImageFilter.SHARPEN)
+
+        # 3. Boost contrast to separate paper texture from pen ink
+        enhancer = ImageEnhance.Contrast(img)
+        img = enhancer.enhance(2.2)
+
+        out_buf = io.BytesIO()
+        img.save(out_buf, format="PNG")
+        return out_buf.getvalue()
+    except Exception as e:
+        logger.debug("Handwritten stroke enhancement fallback: %s", e)
+        return image_bytes
+
+
+def detect_handwriting_presence(
+    image_bytes: bytes,
+) -> tuple[bool, float]:
+    """
+    Analyze image stroke patterns, line variance, and gradient smoothness to estimate
+    the probability of freeform handwritten text versus rigid typographic printing.
+    Returns (is_handwritten_likely, confidence_score).
+    """
+    try:
+        from PIL import Image
+
+        img = Image.open(io.BytesIO(image_bytes)).convert("L")
+        w, h = img.size
+        pixels = img.load()
+
+        # Sample pixel intensity and stroke gradient transitions
+        dark_pixels = 0
+        transitions = 0
+        step = max(1, min(w, h) // 100)
+
+        for y in range(0, h, step):
+            prev = pixels[0, y]
+            for x in range(step, w, step):
+                curr = pixels[x, y]
+                if curr < 180:
+                    dark_pixels += 1
+                if abs(curr - prev) > 40:
+                    transitions += 1
+                prev = curr
+
+        total_samples = max(1, (w // step) * (h // step))
+        density = dark_pixels / float(total_samples)
+        transition_rate = transitions / float(total_samples)
+
+        confidence = min(1.0, max(0.0, transition_rate * 1.8 + density * 1.2))
+        is_handwritten = confidence > 0.40
+
+        return is_handwritten, round(confidence, 3)
+    except Exception as e:
+        logger.debug("Handwriting detection heuristic fallback: %s", e)
+        return False, 0.0
+
+

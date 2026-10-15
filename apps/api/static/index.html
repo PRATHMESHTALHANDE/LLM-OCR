@@ -807,8 +807,8 @@
       <div class="kpi-card">
         <div class="kpi-info">
           <h3>Active Vision OCR</h3>
-          <div class="kpi-value" style="font-size: 20px;" id="kpiActiveModel">Florence-2</div>
-          <div class="kpi-sub">&lt;OCR_WITH_REGION&gt;</div>
+          <div class="kpi-value" style="font-size: 20px;" id="kpiActiveModel">GLM-OCR 0.9B</div>
+          <div class="kpi-sub">Dense Layout & Handwriting</div>
         </div>
         <div class="dial-wrap">
           <div class="dial-circle" style="--dial-color: var(--accent-coral); --dial-deg: 320deg;">
@@ -881,7 +881,9 @@
           </div>
 
           <div class="segmented-control">
-            <button class="segment-btn active" id="btnFlorence" onclick="selectModel('florence2')">Florence-2</button>
+            <button class="segment-btn active" id="btnGlm" onclick="selectModel('glm_ocr')">GLM-OCR</button>
+            <button class="segment-btn" id="btnHtr" onclick="selectModel('handwriting')">Handwriting</button>
+            <button class="segment-btn" id="btnFlorence" onclick="selectModel('florence2')">Florence-2</button>
             <button class="segment-btn" id="btnPaddle" onclick="selectModel('paddle')">PaddleOCR</button>
             <button class="segment-btn" id="btnDocling" onclick="selectModel('docling')">Docling</button>
           </div>
@@ -1121,7 +1123,7 @@
     let currentDocId = null;
     let currentDocTotalPages = 1;
     let currentPage = 1;
-    let selectedModel = 'florence2';
+    let selectedModel = 'glm_ocr';
     let detectedElements = [];
     let scale = 1.0;
     let pollTimer = null;
@@ -1170,7 +1172,7 @@
       btnStart.style.opacity = '0.7';
 
       try {
-        const resp = await fetch('/api/v1/documents/upload', {
+        const resp = await fetch(`/api/v1/documents/upload?engine=${encodeURIComponent(selectedModel)}`, {
           method: 'POST',
           body: formData,
         });
@@ -1707,7 +1709,7 @@
     // Trigger OCR Processing for a document
     async function triggerDocProcess(docId) {
       try {
-        const resp = await fetch(`/api/v1/documents/${docId}/process`, {
+        const resp = await fetch(`/api/v1/documents/${docId}/process?engine=${encodeURIComponent(selectedModel)}`, {
           method: 'POST',
         });
         if (resp.ok) {
@@ -1745,10 +1747,20 @@
     function selectModel(model) {
       selectedModel = model;
       document.querySelectorAll('.segment-btn').forEach(b => b.classList.remove('active'));
-      if (model === 'florence2') document.getElementById('btnFlorence').classList.add('active');
-      if (model === 'paddle') document.getElementById('btnPaddle').classList.add('active');
-      if (model === 'docling') document.getElementById('btnDocling').classList.add('active');
-      document.getElementById('kpiActiveModel').textContent = model.toUpperCase();
+      if (model === 'glm_ocr') document.getElementById('btnGlm')?.classList.add('active');
+      if (model === 'handwriting') document.getElementById('btnHtr')?.classList.add('active');
+      if (model === 'florence2') document.getElementById('btnFlorence')?.classList.add('active');
+      if (model === 'paddle') document.getElementById('btnPaddle')?.classList.add('active');
+      if (model === 'docling') document.getElementById('btnDocling')?.classList.add('active');
+
+      const modelNames = {
+        glm_ocr: 'GLM-OCR 0.9B',
+        handwriting: 'TrOCR (HTR)',
+        florence2: 'Florence-2',
+        paddle: 'PaddleOCR',
+        docling: 'Docling',
+      };
+      document.getElementById('kpiActiveModel').textContent = modelNames[model] || model.toUpperCase();
     }
 
     // Canvas zoom & reset

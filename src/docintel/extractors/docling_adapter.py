@@ -82,8 +82,8 @@ class DoclingAdapter(BaseExtractor):
             except Exception as e:
                 logger.error("Docling extraction failed: %s; falling back to native reader", e)
 
-        # Fallback extraction
-        return self._fallback_extract(document_id, path, mime_type, file_size, file_hash, metadata)
+        # Fallback extraction with vision OCR / handwriting integration
+        return await self._fallback_extract(document_id, path, mime_type, file_size, file_hash, metadata)
 
     def _extract_with_docling(
         self,
@@ -181,7 +181,25 @@ class DoclingAdapter(BaseExtractor):
             created_at=datetime.utcnow(),
         )
 
-    def _fallback_extract(
+    def _resolve_ocr_provider(self, engine_name: str | None):
+        """Instantiate requested OCR engine."""
+        from docintel.ocr.florence_adapter import Florence2Adapter
+        from docintel.ocr.glm_adapter import GLMOCRAdapter
+        from docintel.ocr.handwriting_adapter import HandwritingOCRAdapter
+        from docintel.ocr.paddle_adapter import PaddleOCRAdapter
+
+        norm = (engine_name or "glm_ocr").lower()
+        if "glm" in norm:
+            return GLMOCRAdapter()
+        elif "handwriting" in norm or "htr" in norm:
+            return HandwritingOCRAdapter()
+        elif "florence" in norm:
+            return Florence2Adapter()
+        elif "paddle" in norm:
+            return PaddleOCRAdapter()
+        return GLMOCRAdapter()
+
+    async def _fallback_extract(
         self,
         document_id: str,
         path: Path,
@@ -190,12 +208,15 @@ class DoclingAdapter(BaseExtractor):
         file_hash: str,
         metadata: dict[str, Any] | None,
     ) -> CanonicalDocument:
-        """High-performance PyMuPDF fallback reader extracting genuine layouts and bounding boxes."""
+        """High-performance PyMuPDF fallback reader with automated Vision OCR & Handwriting HTR integration."""
         artifact_mgr = ArtifactManager()
         pages: list[PageMetadata] = []
         elements: list[DocumentElement] = []
         all_markdown_parts: list[str] = [f"# {path.stem}\n"]
         reading_order = 0
+
+        target_engine = (metadata or {}).get("ocr_engine", "glm_ocr")
+        ocr_provider = self._resolve_ocr_provider(target_engine)
 
         try:
             import fitz
@@ -207,13 +228,23 @@ class DoclingAdapter(BaseExtractor):
                 page_num = page_idx + 1
                 w = float(page.rect.width)
                 h = float(page.rect.height)
+                pix_bytes = None
+                pix = None
 
                 # 1. Rasterize page preview image for UI canvas inspection
                 try:
                     pix = page.get_pixmap(dpi=150)
-                    artifact_mgr.save_page_image(document_id, page_num, pix.tobytes("png"))
+                    pix_bytes = pix.tobytes("png")
+                    artifact_mgr.save_page_image(document_id, page_num, pix_bytes)
                 except Exception as img_err:
                     logger.debug("Could not rasterize page %d preview: %s", page_num, img_err)
+
+                # 2. Extract genuine text blocks
+                blocks = page.get_text("blocks") if hasattr(page, "get_text") else []
+                total_chars = sum(len(b[4].strip()) for b in blocks if len(b) >= 5)
+
+                # Check if page is scanned image or freehand cursive text with negligible digital characters
+                is_scanned_or_handwritten = total_chars < 15 or (target_engine in ("handwriting", "glm_ocr") and total_chars < 50)
 
                 pages.append(
                     PageMetadata(
@@ -222,59 +253,86 @@ class DoclingAdapter(BaseExtractor):
                         height=h,
                         dpi=150.0,
                         orientation=0,
-                        has_images=len(page.get_images()) > 0,
-                        is_scanned=False,
+                        has_images=len(page.get_images()) > 0 or is_scanned_or_handwritten,
+                        is_scanned=is_scanned_or_handwritten,
                     )
                 )
 
-                # 2. Extract genuine text blocks and bounding boxes
-                # blocks format: (x0, y0, x1, y1, text, block_no, block_type)
-                blocks = page.get_text("blocks")
+                if is_scanned_or_handwritten and pix_bytes and pix:
+                    # Invoke Vision OCR / Handwriting HTR engine on rasterized page
+                    logger.info("Page %d has %d digital chars; running %s OCR engine...", page_num, total_chars, ocr_provider.name)
+                    ocr_res = await ocr_provider.process_image(pix_bytes)
 
-                for b in blocks:
-                    if len(b) >= 7 and b[6] == 0:  # Text block
-                        raw_text = b[4].strip()
-                        if not raw_text:
-                            continue
+                    pix_w = float(pix.width) if pix.width > 0 else w
+                    pix_h = float(pix.height) if pix.height > 0 else h
+                    scale_x = w / pix_w
+                    scale_y = h / pix_h
 
-                        # Classify layout element type heuristically
-                        elem_type = ElementType.PARAGRAPH
-                        lines = [line.strip() for line in raw_text.splitlines() if line.strip()]
-                        first_line = lines[0] if lines else ""
-
-                        if len(lines) <= 2 and (first_line.isupper() or len(raw_text) < 60) and not raw_text.endswith("."):
-                            if page_idx == 0 and reading_order == 0:
-                                elem_type = ElementType.TITLE
-                            else:
-                                elem_type = ElementType.SECTION_HEADER
-                            all_markdown_parts.append(f"\n## {raw_text}\n")
-                        elif raw_text.startswith(("-", "*", "•", "1.", "2.", "3.", "4.", "5.")):
-                            elem_type = ElementType.LIST_ITEM
-                            all_markdown_parts.append(f"- {raw_text}")
-                        elif "|" in raw_text or "\t" in raw_text:
-                            elem_type = ElementType.TABLE
-                            all_markdown_parts.append(f"\n```\n{raw_text}\n```\n")
-                        else:
-                            elem_type = ElementType.PARAGRAPH
-                            all_markdown_parts.append(f"\n{raw_text}\n")
-
+                    for tok in ocr_res.tokens:
+                        b = tok.bbox
+                        elem_bbox = BoundingBox(
+                            x0=round(b.x0 * scale_x, 2),
+                            y0=round(b.y0 * scale_y, 2),
+                            x1=round(b.x1 * scale_x, 2),
+                            y1=round(b.y1 * scale_y, 2),
+                            coord_system=CoordSystem.PIXEL,
+                        )
                         elements.append(
                             DocumentElement(
                                 page_number=page_num,
-                                element_type=elem_type,
-                                text=raw_text,
-                                confidence=0.99,
-                                bbox=BoundingBox(
-                                    x0=round(b[0], 2),
-                                    y0=round(b[1], 2),
-                                    x1=round(b[2], 2),
-                                    y1=round(b[3], 2),
-                                    coord_system=CoordSystem.PIXEL,
-                                ),
+                                element_type=ElementType.PARAGRAPH,
+                                text=tok.text,
+                                confidence=tok.confidence,
+                                bbox=elem_bbox,
                                 reading_order=reading_order,
                             )
                         )
                         reading_order += 1
+                        all_markdown_parts.append(f"{tok.text}\n")
+                else:
+                    for b in blocks:
+                        if len(b) >= 7 and b[6] == 0:  # Text block
+                            raw_text = b[4].strip()
+                            if not raw_text:
+                                continue
+
+                            elem_type = ElementType.PARAGRAPH
+                            lines = [line.strip() for line in raw_text.splitlines() if line.strip()]
+                            first_line = lines[0] if lines else ""
+
+                            if len(lines) <= 2 and (first_line.isupper() or len(raw_text) < 60) and not raw_text.endswith("."):
+                                if page_idx == 0 and reading_order == 0:
+                                    elem_type = ElementType.TITLE
+                                else:
+                                    elem_type = ElementType.SECTION_HEADER
+                                all_markdown_parts.append(f"\n## {raw_text}\n")
+                            elif raw_text.startswith(("-", "*", "•", "1.", "2.", "3.", "4.", "5.")):
+                                elem_type = ElementType.LIST_ITEM
+                                all_markdown_parts.append(f"- {raw_text}")
+                            elif "|" in raw_text or "\t" in raw_text:
+                                elem_type = ElementType.TABLE
+                                all_markdown_parts.append(f"\n```\n{raw_text}\n```\n")
+                            else:
+                                elem_type = ElementType.PARAGRAPH
+                                all_markdown_parts.append(f"\n{raw_text}\n")
+
+                            elements.append(
+                                DocumentElement(
+                                    page_number=page_num,
+                                    element_type=elem_type,
+                                    text=raw_text,
+                                    confidence=0.99,
+                                    bbox=BoundingBox(
+                                        x0=round(b[0], 2),
+                                        y0=round(b[1], 2),
+                                        x1=round(b[2], 2),
+                                        y1=round(b[3], 2),
+                                        coord_system=CoordSystem.PIXEL,
+                                    ),
+                                    reading_order=reading_order,
+                                )
+                            )
+                            reading_order += 1
 
             doc.close()
 

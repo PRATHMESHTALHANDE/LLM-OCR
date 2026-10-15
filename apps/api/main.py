@@ -48,12 +48,12 @@ from docintel.storage.repositories import (
 logger = logging.getLogger("docintel.api")
 
 
-async def process_document_pipeline(document_id: str, job_id: str) -> None:
+async def process_document_pipeline(document_id: str, job_id: str, ocr_engine: str = "glm_ocr") -> None:
     """
     Background worker function executing document extraction, layout parsing,
     canonical JSON/Markdown generation, and database element persistence.
     """
-    logger.info("Starting background processing for document: %s (job: %s)", document_id, job_id)
+    logger.info("Starting background processing for document: %s (job: %s, engine: %s)", document_id, job_id, ocr_engine)
     artifact_mgr = ArtifactManager()
 
     async with session_scope() as session:
@@ -81,11 +81,14 @@ async def process_document_pipeline(document_id: str, job_id: str) -> None:
             text_ext = TextExtractor()
             extractor = docling if docling.supports_mime(doc.mime_type) else text_ext
 
+            meta = dict(doc.metadata_ or {})
+            meta["ocr_engine"] = ocr_engine
+
             canon_doc: CanonicalDocument = await extractor.extract(
                 document_id=document_id,
                 file_path=file_path,
                 mime_type=doc.mime_type,
-                metadata=doc.metadata_,
+                metadata=meta,
             )
 
             await job_repo.update_job(job_id, progress_percent=55.0, current_step="saving_artifacts")
@@ -272,6 +275,7 @@ async def run_diagnostics():
 async def upload_document(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(..., description="Document file to upload (PDF, PNG, JPG, DOCX, TXT)"),
+    engine: str = Query("glm_ocr", description="Target OCR engine (glm_ocr, handwriting, florence2, paddle)"),
     session: AsyncSession = Depends(get_db_session),
 ):
     """
@@ -288,8 +292,8 @@ async def upload_document(
             stream=file.file,
             reported_mime=file.content_type,
         )
-        # Trigger immediate background processing
-        background_tasks.add_task(process_document_pipeline, response.document_id, response.job_id)
+        # Trigger immediate background processing with selected OCR engine
+        background_tasks.add_task(process_document_pipeline, response.document_id, response.job_id, engine)
         return response
     except IngestionValidationError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -302,9 +306,10 @@ async def upload_document(
 async def trigger_document_process(
     document_id: str,
     background_tasks: BackgroundTasks,
+    engine: str = Query("glm_ocr", description="Target OCR engine (glm_ocr, handwriting, florence2, paddle)"),
     session: AsyncSession = Depends(get_db_session),
 ):
-    """Manually trigger or retry OCR extraction for an existing document."""
+    """Manually trigger or retry OCR extraction for an existing document with the selected engine."""
     doc_repo = DocumentRepository(session)
     job_repo = JobRepository(session)
 
@@ -315,8 +320,8 @@ async def trigger_document_process(
     latest_job = await job_repo.get_latest_for_document(document_id)
     job_id = latest_job.id if latest_job else (await job_repo.create_job(document_id)).id
 
-    background_tasks.add_task(process_document_pipeline, document_id, job_id)
-    return {"status": "accepted", "message": f"Processing initiated for document {document_id}"}
+    background_tasks.add_task(process_document_pipeline, document_id, job_id, engine)
+    return {"status": "accepted", "message": f"Processing initiated for document {document_id} with {engine}"}
 
 
 @app.get("/api/v1/documents", tags=["Documents"])
