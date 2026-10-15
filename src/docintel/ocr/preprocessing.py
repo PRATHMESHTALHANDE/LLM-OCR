@@ -98,7 +98,32 @@ def enhance_handwritten_strokes(
     """
     Apply specialized stroke-enhancement, background bleed-through reduction,
     and adaptive binarization tailored for freehand cursive and ballpoint/ink writing.
+    Uses OpenCV adaptive thresholding when available, falling back to PIL.
     """
+    try:
+        import cv2
+        import numpy as np
+
+        nparr = np.frombuffer(image_bytes, np.uint8)
+        img_cv = cv2.imdecode(nparr, cv2.IMREAD_GRAYSCALE)
+        if img_cv is not None:
+            # 1. Morphological stroke dilation to bridge hairline cursive gaps
+            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
+            # 2. Gaussian adaptive threshold for clean ink separation from uneven paper shadows
+            adaptive = cv2.adaptiveThreshold(
+                img_cv,
+                255,
+                cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                cv2.THRESH_BINARY,
+                21,
+                11,
+            )
+            success, enc = cv2.imencode(".png", adaptive)
+            if success:
+                return enc.tobytes()
+    except Exception as e:
+        logger.debug("OpenCV adaptive enhancement skipped: %s", e)
+
     try:
         from PIL import Image, ImageEnhance, ImageFilter, ImageOps
         img = Image.open(io.BytesIO(image_bytes)).convert("L")

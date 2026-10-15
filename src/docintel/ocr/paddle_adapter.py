@@ -35,10 +35,14 @@ class PaddleOCRAdapter(BaseOCRProvider):
             import paddleocr
             return True
         except ImportError:
-            return False
+            try:
+                import rapidocr_onnxruntime
+                return True
+            except ImportError:
+                return False
 
     def _init_ocr(self) -> None:
-        """Lazily load PaddleOCR engine."""
+        """Lazily load PaddleOCR or RapidOCR engine."""
         if not self._initialized:
             try:
                 from paddleocr import PaddleOCR
@@ -47,11 +51,19 @@ class PaddleOCRAdapter(BaseOCRProvider):
                     lang=self.lang,
                     show_log=False,
                 )
+                self._is_rapid = False
                 self._initialized = True
             except ImportError:
-                logger.warning("PaddleOCR is not installed in the environment.")
-                self._ocr = None
-                self._initialized = True
+                try:
+                    from rapidocr_onnxruntime import RapidOCR
+                    self._ocr = RapidOCR()
+                    self._is_rapid = True
+                    self._initialized = True
+                    logger.info("Using RapidOCR (PP-OCRv4 ONNX) engine for PaddleOCR provider.")
+                except ImportError:
+                    logger.warning("PaddleOCR and RapidOCR are not installed in the environment.")
+                    self._ocr = None
+                    self._initialized = True
 
     async def process_image(
         self,
@@ -85,35 +97,57 @@ class PaddleOCRAdapter(BaseOCRProvider):
                 img = Image.fromarray(image_input).convert("RGB")
 
             img_np = np.array(img)
-            result = self._ocr.ocr(img_np, cls=self.use_angle_cls)
-
             tokens: list[OCRToken] = []
             extracted_lines: list[str] = []
 
-            if result and result[0]:
-                for line in result[0]:
-                    box_points, (text, conf) = line
-                    # box_points is [[x0, y0], [x1, y0], [x1, y1], [x0, y1]]
-                    xs = [pt[0] for pt in box_points]
-                    ys = [pt[1] for pt in box_points]
-
-                    bbox = BoundingBox(
-                        x0=float(min(xs)),
-                        y0=float(min(ys)),
-                        x1=float(max(xs)),
-                        y1=float(max(ys)),
-                        coord_system=CoordSystem.PIXEL,
-                    )
-
-                    tokens.append(
-                        OCRToken(
-                            text=str(text),
-                            confidence=float(conf),
-                            bbox=bbox,
-                            polygon=[[float(p[0]), float(p[1])] for p in box_points],
+            if getattr(self, "_is_rapid", False):
+                ocr_results, _ = self._ocr(img_np)
+                if ocr_results:
+                    for line in ocr_results:
+                        box_points, text, conf = line
+                        xs = [pt[0] for pt in box_points]
+                        ys = [pt[1] for pt in box_points]
+                        bbox = BoundingBox(
+                            x0=round(float(min(xs)), 2),
+                            y0=round(float(min(ys)), 2),
+                            x1=round(float(max(xs)), 2),
+                            y1=round(float(max(ys)), 2),
+                            coord_system=CoordSystem.PIXEL,
                         )
-                    )
-                    extracted_lines.append(str(text))
+                        tokens.append(
+                            OCRToken(
+                                text=str(text).strip(),
+                                confidence=round(float(conf), 3),
+                                bbox=bbox,
+                                polygon=[[float(p[0]), float(p[1])] for p in box_points],
+                            )
+                        )
+                        extracted_lines.append(str(text).strip())
+            else:
+                result = self._ocr.ocr(img_np, cls=self.use_angle_cls)
+                if result and result[0]:
+                    for line in result[0]:
+                        box_points, (text, conf) = line
+                        xs = [pt[0] for pt in box_points]
+                        ys = [pt[1] for pt in box_points]
+
+                        bbox = BoundingBox(
+                            x0=float(min(xs)),
+                            y0=float(min(ys)),
+                            x1=float(max(xs)),
+                            y1=float(max(ys)),
+                            coord_system=CoordSystem.PIXEL,
+                        )
+
+                        tokens.append(
+                            OCRToken(
+                                text=str(text),
+                                confidence=float(conf),
+                                bbox=bbox,
+                                polygon=[[float(p[0]), float(p[1])] for p in box_points],
+                            )
+                        )
+                        extracted_lines.append(str(text))
 
             full_text = "\n".join(extracted_lines)
             latency_ms = (time.perf_counter() - start_time) * 1000.0

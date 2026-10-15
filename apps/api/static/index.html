@@ -335,34 +335,50 @@
 
     /* Model Selector (Segmented Neumorphic Control) */
     .segmented-control {
-      display: flex;
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
       background: var(--card-bg);
       box-shadow: var(--neu-pressed);
-      padding: 5px;
-      border-radius: 14px;
+      padding: 6px;
+      border-radius: 16px;
       margin-bottom: 16px;
-      gap: 4px;
+      gap: 6px;
+      box-sizing: border-box;
+      width: 100%;
     }
 
     .segment-btn {
-      flex: 1;
-      padding: 8px 10px;
+      padding: 9px 4px;
       border-radius: 10px;
       border: none;
       background: transparent;
       font-family: inherit;
-      font-size: 12px;
+      font-size: 11.5px;
       font-weight: 700;
       color: var(--text-muted);
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+      min-width: 0;
+      overflow: hidden;
     }
 
     .segment-btn.active {
       background: var(--card-bg);
       color: #1a202c;
       box-shadow: var(--neu-flat-sm);
+    }
+
+    .segment-btn.span-2 {
+      grid-column: span 2;
+    }
+
+    .segment-btn.span-3 {
+      grid-column: span 3;
     }
 
     /* Preset Buttons */
@@ -881,11 +897,11 @@
           </div>
 
           <div class="segmented-control">
-            <button class="segment-btn active" id="btnGlm" onclick="selectModel('glm_ocr')">GLM-OCR</button>
-            <button class="segment-btn" id="btnHtr" onclick="selectModel('handwriting')">Handwriting</button>
-            <button class="segment-btn" id="btnFlorence" onclick="selectModel('florence2')">Florence-2</button>
-            <button class="segment-btn" id="btnPaddle" onclick="selectModel('paddle')">PaddleOCR</button>
-            <button class="segment-btn" id="btnDocling" onclick="selectModel('docling')">Docling</button>
+            <button class="segment-btn span-2 active" id="btnGlm" onclick="selectModel('glm_ocr')">GLM-OCR</button>
+            <button class="segment-btn span-2" id="btnHtr" onclick="selectModel('handwriting')">Handwriting</button>
+            <button class="segment-btn span-2" id="btnFlorence" onclick="selectModel('florence2')">Florence-2</button>
+            <button class="segment-btn span-3" id="btnPaddle" onclick="selectModel('paddle')">PaddleOCR</button>
+            <button class="segment-btn span-3" id="btnDocling" onclick="selectModel('docling')">Docling</button>
           </div>
 
           <div style="display: flex; flex-direction: column; gap: 10px; font-size: 12px; font-weight: 600;">

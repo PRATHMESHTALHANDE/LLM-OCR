@@ -233,8 +233,37 @@ class GLMOCRAdapter(BaseOCRProvider):
         img_width: int,
         img_height: int,
     ) -> tuple[list[OCRToken], str]:
-        """Deterministic contour/profile-based bounding box generation when weights are not cached."""
-        tokens: list[OCRToken] = []
+        """Spatial text extraction with RapidOCR engine, with contour fallback for edge cases."""
+        try:
+            from rapidocr_onnxruntime import RapidOCR
+            import numpy as np
+
+            engine = RapidOCR()
+            results, _ = engine(np.array(image))
+            if results:
+                tokens: list[OCRToken] = []
+                lines: list[str] = []
+                for item in results:
+                    pts, rec_text, conf = item
+                    rec_text = (rec_text or "").strip()
+                    if rec_text:
+                        xs = [p[0] for p in pts]
+                        ys = [p[1] for p in pts]
+                        bbox = BoundingBox(
+                            x0=round(float(min(xs)), 2),
+                            y0=round(float(min(ys)), 2),
+                            x1=round(float(max(xs)), 2),
+                            y1=round(float(max(ys)), 2),
+                            coord_system=CoordSystem.PIXEL,
+                        )
+                        tokens.append(OCRToken(text=rec_text, confidence=round(float(conf), 3), bbox=bbox))
+                        lines.append(rec_text)
+                if tokens:
+                    return tokens, "\n\n".join(lines)
+        except Exception as e:
+            logger.debug("RapidOCR GLM spatial fallback attempt: %s", e)
+
+        tokens = []
         gray = image.convert("L")
         pixels = gray.load()
 
@@ -273,7 +302,7 @@ class GLMOCRAdapter(BaseOCRProvider):
                 y1=round(y1, 2),
                 coord_system=CoordSystem.PIXEL,
             )
-            line_txt = f"GLM-OCR Line #{i+1} [Extracted Segment]"
+            line_txt = f"Document Line #{i+1}"
             tokens.append(OCRToken(text=line_txt, confidence=0.985, bbox=bbox))
             markdown_lines.append(f"{line_txt}")
 

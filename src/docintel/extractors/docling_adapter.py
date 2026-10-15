@@ -243,8 +243,14 @@ class DoclingAdapter(BaseExtractor):
                 blocks = page.get_text("blocks") if hasattr(page, "get_text") else []
                 total_chars = sum(len(b[4].strip()) for b in blocks if len(b) >= 5)
 
-                # Check if page is scanned image or freehand cursive text with negligible digital characters
-                is_scanned_or_handwritten = total_chars < 15 or (target_engine in ("handwriting", "glm_ocr") and total_chars < 50)
+                # Check if page is an image, scanned document, or user explicitly requested OCR
+                is_image_source = mime_type.startswith("image/") or path.suffix.lower() in (".png", ".jpg", ".jpeg", ".webp", ".tiff", ".bmp")
+                is_scanned_or_handwritten = (
+                    is_image_source
+                    or total_chars < 20
+                    or (target_engine == "handwriting")
+                    or (target_engine in ("glm_ocr", "paddle", "florence2") and total_chars < 80)
+                )
 
                 pages.append(
                     PageMetadata(
