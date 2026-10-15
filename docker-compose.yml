@@ -1,0 +1,52 @@
+# Open Doc Intelligence (docintel) - Local Infrastructure
+# PostgreSQL 16 Alpine + Persistent Volumes + Healthchecks
+# Usage:
+#   docker compose up -d postgres
+#   docker compose --profile retrieval up -d
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: docintel-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DOCINTEL_DB_USER:-docintel}
+      POSTGRES_PASSWORD: ${DOCINTEL_DB_PASSWORD:-docintel}
+      POSTGRES_DB: ${DOCINTEL_DB_NAME:-docintel}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "${DOCINTEL_DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DOCINTEL_DB_USER:-docintel} -d ${DOCINTEL_DB_NAME:-docintel}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - docintel-net
+
+  qdrant:
+    image: qdrant/qdrant:v1.9.2
+    container_name: docintel-qdrant
+    restart: unless-stopped
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    profiles:
+      - retrieval
+    networks:
+      - docintel-net
+
+networks:
+  docintel-net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    name: docintel_postgres_data
+  qdrant_data:
+    name: docintel_qdrant_data

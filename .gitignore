@@ -1,0 +1,69 @@
+# Environments & Dependencies
+.venv/
+env/
+venv/
+ENV/
+node_modules/
+dist/
+build/
+*.egg-info/
+.eggs/
+
+# Secrets & Local Configurations (NEVER COMMIT)
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.cert
+*.crt
+id_rsa
+secrets/
+
+# Storage, Uploads & Databases
+data/runtime/
+data/runtime/**
+*.sqlite3
+*.sqlite3-journal
+*.db
+postgres_data/
+
+# Model Caches & Weights (Downloaded at runtime)
+data/models/
+data/models/**
+.cache/
+hf_cache/
+torch_cache/
+transformers_cache/
+
+# Temporary Directories & Logs
+data/temp/
+temp/
+tmp/
+*.log
+logs/
+*.pid
+
+# Python Cache & Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Frontend Caches & Artifacts
+.vite/
+coverage/
+
+# OS-Specific
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Codebase Visualization Temporary Outputs
+graphify-out/
+*.gv
+*.svg.tmp
