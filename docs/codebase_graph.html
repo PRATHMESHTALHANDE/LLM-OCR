@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Open Doc Intelligence - Codebase Topology Explorer</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    body {
+      background-color: #0b0e14;
+      color: #e6edf3;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      height: 56px;
+      background: #161b22;
+      border-bottom: 1px solid #30363d;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      z-index: 10;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      font-size: 16px;
+      letter-spacing: -0.02em;
+    }
+    .brand-badge {
+      background: #238636;
+      color: #fff;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .search-input {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      color: #c9d1d9;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      outline: none;
+      width: 220px;
+    }
+    .search-input:focus {
+      border-color: #58a6ff;
+    }
+    .btn {
+      background: #21262d;
+      border: 1px solid #30363d;
+      color: #c9d1d9;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn:hover {
+      background: #30363d;
+      color: #fff;
+    }
+    .btn.active {
+      background: #1f6feb;
+      border-color: #58a6ff;
+      color: #fff;
+    }
+    .main-container {
+      flex: 1;
+      position: relative;
+      display: flex;
+    }
+    #canvas-container {
+      flex: 1;
+      height: 100%;
+      position: relative;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    .sidebar {
+      width: 320px;
+      background: #161b22;
+      border-left: 1px solid #30363d;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .sidebar-card {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 14px;
+    }
+    .sidebar-card h3 {
+      font-size: 13px;
+      color: #8b949e;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      padding: 4px 0;
+      border-bottom: 1px solid #21262d;
+    }
+    .stat-row:last-child {
+      border-bottom: none;
+    }
+    .stat-val {
+      font-weight: 600;
+      color: #58a6ff;
+      font-family: monospace;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      margin-bottom: 6px;
+    }
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+    .details-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #58a6ff;
+      word-break: break-all;
+    }
+    .details-meta {
+      font-size: 12px;
+      color: #8b949e;
+      margin-top: 4px;
+    }
+    .details-doc {
+      font-size: 12px;
+      color: #c9d1d9;
+      background: #161b22;
+      border-radius: 6px;
+      padding: 8px;
+      margin-top: 8px;
+      font-style: italic;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <span>Open Doc Intelligence</span>
+      <span class="brand-badge">AST Topology Graph</span>
+    </div>
+    <div class="controls">
+      <input type="text" id="search" class="search-input" placeholder="Search modules, classes, routes...">
+      <button class="btn active" id="btn-modules">Modules</button>
+      <button class="btn active" id="btn-classes">Classes</button>
+      <button class="btn active" id="btn-routes">Routes</button>
+      <button class="btn" id="btn-reset">Reset View</button>
+    </div>
+  </header>
+
+  <div class="main-container">
+    <div id="canvas-container">
+      <canvas id="graphCanvas"></canvas>
+    </div>
+
+    <div class="sidebar">
+      <div class="sidebar-card">
+        <h3>Architecture KPIs</h3>
+        <div class="stat-row"><span>Total Modules</span><span class="stat-val" id="stat-mods">0</span></div>
+        <div class="stat-row"><span>Total Classes</span><span class="stat-val" id="stat-classes">0</span></div>
+        <div class="stat-row"><span>Total Functions</span><span class="stat-val" id="stat-fns">0</span></div>
+        <div class="stat-row"><span>Graph Nodes</span><span class="stat-val" id="stat-nodes">0</span></div>
+        <div class="stat-row"><span>Coupling Edges</span><span class="stat-val" id="stat-edges">0</span></div>
+      </div>
+
+      <div class="sidebar-card">
+        <h3>Legend</h3>
+        <div class="legend-item"><div class="legend-dot" style="background:#58a6ff;"></div><span>Modules (Files)</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background:#bc8cff;"></div><span>Classes</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background:#3fb950;"></div><span>FastAPI Routes</span></div>
+      </div>
+
+      <div class="sidebar-card" id="details-card">
+        <h3>Selected Node</h3>
+        <div id="details-content">
+          <p style="font-size:13px; color:#8b949e;">Click any node to inspect module hierarchy, docstrings, and architectural coupling.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const rawNodes = [{"id": "mod:docintel.cli", "label": "cli", "full_name": "docintel.cli", "type": "module", "package": "docintel", "subpackage": "cli", "file": "src/docintel/cli.py", "lines": 50, "docstring": "Open Doc Intelligence (docintel) - Command Line Interface (CLI)\nProvides CLI commands for diagnostics, starting services, and processing documents.", "size": 20}, {"id": "mod:docintel.__init__", "label": "__init__", "full_name": "docintel.__init__", "type": "module", "package": "docintel", "subpackage": "__init__", "file": "src/docintel/__init__.py", "lines": 7, "docstring": "Open Doc Intelligence (docintel).\n\nA local-first, open-source document ingestion, OCR, layout parsing,\nevaluation, and grounded retrieval platform.", "size": 18}, {"id": "mod:docintel.config.settings", "label": "settings", "full_name": "docintel.config.settings", "type": "module", "package": "docintel", "subpackage": "config", "file": "src/docintel/config/settings.py", "lines": 107, "docstring": "Open Doc Intelligence (docintel) - Application Configuration\nPydantic v2 Settings with environment-variable loading, path resolution, and DB URL helpers.", "size": 22}, {"id": "cls:docintel.config.settings.Settings", "label": "Settings", "full_name": "docintel.config.settings.Settings", "type": "class", "package": "docintel", "file": "src/docintel/config/settings.py", "docstring": "DocIntel centralized configuration.", "size": 12}, {"id": "mod:docintel.config.__init__", "label": "__init__", "full_name": "docintel.config.__init__", "type": "module", "package": "docintel", "subpackage": "config", "file": "src/docintel/config/__init__.py", "lines": 5, "docstring": "DocIntel Configuration Package.", "size": 18}, {"id": "mod:docintel.core.schemas", "label": "schemas", "full_name": "docintel.core.schemas", "type": "module", "package": "docintel", "subpackage": "core", "file": "src/docintel/core/schemas.py", "lines": 197, "docstring": "Open Doc Intelligence (docintel) - Canonical Pydantic v2 Schemas\nUnified data contract for documents, bounding boxes, structural layout elements,\npages, artifacts, and processing job responses.", "size": 25}, {"id": "cls:docintel.core.schemas.CoordSystem", "label": "CoordSystem", "full_name": "docintel.core.schemas.CoordSystem", "type": "class", "package": "docintel", "file": "src/docintel/core/schemas.py", "docstring": "Coordinate system for bounding box representations.", "size": 12}, {"id": "cls:docintel.core.schemas.ElementType", "label": "ElementType", "full_name": "docintel.core.schemas.ElementType", "type": "class", "package": "docintel", "file": "src/docintel/core/schemas.py", "docstring": "Taxonomy of document layout and content elements.", "size": 12}, {"id": "cls:docintel.core.schemas.BoundingBox", "label": "BoundingBox", "full_name": "docintel.core.schemas.BoundingBox", "type": "class", "package": "docintel", "file": "src/docintel/core/schemas.py", "docstring": "Standard bounding box model supporting pixel, unit, and norm1000 coordinates.\nStandardized to top-left origin (x0, y0) to bottom-right (x1, y1).", "size": 12}, {"id": "cls:docintel.core.schemas.PageMetadata", "label": "PageMetadata", "full_name": "docintel.core.schemas.PageMetadata", "type": "class", "package": "docintel", "file": "src/docintel/core/schemas.py", "docstring": "Metadata describing a single page of a document.", "size": 12}, {"id": "cls:docintel.core.schemas.DocumentElement", "label": "DocumentElement", "full_name": "docintel.core.schemas.DocumentElement", "type": "class", "package": "docintel", "file": "src/docintel/core/schemas.py", "docstring": "Atomic structural document element representing text, headings, tables, or figures.", "size": 12}, {"id": "cls:docintel.core.schemas.DocumentMetadata", "label": "DocumentMetadata", "full_name": "docintel.core.schemas.DocumentMetadata", "type": "class", "package": "docintel", "file": "src/docintel/core/schemas.py", "docstring": "High-level document metadata extracted from headers or file metadata.", "size": 12}, {"id": "cls:docintel.core.schemas.CanonicalDocument", "label": "CanonicalDocument", "full_name": "docintel.core.schemas.CanonicalDocument", "type": "class", "package": "docintel", "file": "src/docintel/core/schemas.py", "docstring": "Root canonical document representation exported to document.json.\nStandardized interchange format for the entire DocIntel platform.", "size": 12}, {"id": "cls:docintel.core.schemas.IngestResponse", "label": "IngestResponse", "full_name": "docintel.core.schemas.IngestResponse", "type": "class", "package": "docintel", "file": "src/docintel/core/schemas.py", "docstring": "API response when a document is uploaded and accepted for processing.", "size": 12}, {"id": "cls:docintel.core.schemas.JobStatusResponse", "label": "JobStatusResponse", "full_name": "docintel.core.schemas.JobStatusResponse", "type": "class", "package": "docintel", "file": "src/docintel/core/schemas.py", "docstring": "API response reporting current execution progress of a document job.", "size": 12}, {"id": "mod:docintel.core.__init__", "label": "__init__", "full_name": "docintel.core.__init__", "type": "module", "package": "docintel", "subpackage": "core", "file": "src/docintel/core/__init__.py", "lines": 25, "docstring": "DocIntel Core Types & Schemas Package.", "size": 19}, {"id": "mod:docintel.evaluation.charts", "label": "charts", "full_name": "docintel.evaluation.charts", "type": "module", "package": "docintel", "subpackage": "evaluation", "file": "src/docintel/evaluation/charts.py", "lines": 160, "docstring": "Publication-Quality Seaborn & Matplotlib Visualization Engine.\nGenerates 300+ DPI statistical charts for Character/Word Error Rates (CER/WER),\nfield-level entity F1 benchmarks, and model latency/accuracy trade-offs.", "size": 24}, {"id": "mod:docintel.evaluation.metrics_text", "label": "metrics_text", "full_name": "docintel.evaluation.metrics_text", "type": "module", "package": "docintel", "subpackage": "evaluation", "file": "src/docintel/evaluation/metrics_text.py", "lines": 126, "docstring": "Standardized Text Extraction Metrics Engine.\nComputes Character Error Rate (CER) and Word Error Rate (WER) using jiwer,\nalong with field-level Precision, Recall, and F1 scores for structured document understanding.", "size": 23}, {"id": "mod:docintel.evaluation.reports", "label": "reports", "full_name": "docintel.evaluation.reports", "type": "module", "package": "docintel", "subpackage": "evaluation", "file": "src/docintel/evaluation/reports.py", "lines": 124, "docstring": "Automated Markdown Evaluation Report Generator.\nSynthesizes comprehensive benchmark reports integrating statistical error matrices,\nF1 layout scores, and embedded publication-grade Seaborn figures.", "size": 22}, {"id": "mod:docintel.evaluation.__init__", "label": "__init__", "full_name": "docintel.evaluation.__init__", "type": "module", "package": "docintel", "subpackage": "evaluation", "file": "src/docintel/evaluation/__init__.py", "lines": 18, "docstring": "Open Doc Intelligence - Evaluation Platform Package\nProvides standardized CER/WER metrics via jiwer, publication-grade Seaborn charts, and automated markdown reports.", "size": 18}, {"id": "mod:docintel.extractors.base", "label": "base", "full_name": "docintel.extractors.base", "type": "module", "package": "docintel", "subpackage": "extractors", "file": "src/docintel/extractors/base.py", "lines": 38, "docstring": "Open Doc Intelligence (docintel) - Document Extractor Protocol\nAbstract base interface for native and multi-modal document extraction engines.", "size": 19}, {"id": "cls:docintel.extractors.base.BaseExtractor", "label": "BaseExtractor", "full_name": "docintel.extractors.base.BaseExtractor", "type": "class", "package": "docintel", "file": "src/docintel/extractors/base.py", "docstring": "Abstract interface implemented by document extraction adapters.", "size": 12}, {"id": "mod:docintel.extractors.docling_adapter", "label": "docling_adapter", "full_name": "docintel.extractors.docling_adapter", "type": "module", "package": "docintel", "subpackage": "extractors", "file": "src/docintel/extractors/docling_adapter.py", "lines": 393, "docstring": "Open Doc Intelligence (docintel) - IBM Docling Adapter\nIntegrates IBM Docling document converter for layout-aware PDF, Word, PowerPoint,\nand Excel processing, extracting hierarchical reading order, tables, and bounding boxes.", "size": 33}, {"id": "cls:docintel.extractors.docling_adapter.DoclingAdapter", "label": "DoclingAdapter", "full_name": "docintel.extractors.docling_adapter.DoclingAdapter", "type": "class", "package": "docintel", "file": "src/docintel/extractors/docling_adapter.py", "docstring": "Adapter for IBM Docling document parsing engine with high-speed PyMuPDF fallback.", "size": 12}, {"id": "mod:docintel.extractors.text_extractor", "label": "text_extractor", "full_name": "docintel.extractors.text_extractor", "type": "module", "package": "docintel", "subpackage": "extractors", "file": "src/docintel/extractors/text_extractor.py", "lines": 153, "docstring": "Open Doc Intelligence (docintel) - Native Text Extractor\nLightweight, zero-overhead parser for text/plain, text/markdown, and text/csv files.\nGenerates structured paragraphs, headings, and clean canonical document models.", "size": 24}, {"id": "cls:docintel.extractors.text_extractor.TextExtractor", "label": "TextExtractor", "full_name": "docintel.extractors.text_extractor.TextExtractor", "type": "class", "package": "docintel", "file": "src/docintel/extractors/text_extractor.py", "docstring": "Extractor for text-based document formats.", "size": 12}, {"id": "mod:docintel.extractors.__init__", "label": "__init__", "full_name": "docintel.extractors.__init__", "type": "module", "package": "docintel", "subpackage": "extractors", "file": "src/docintel/extractors/__init__.py", "lines": 11, "docstring": "DocIntel Document Extractors Package.", "size": 18}, {"id": "mod:docintel.ingestion.hashing", "label": "hashing", "full_name": "docintel.ingestion.hashing", "type": "module", "package": "docintel", "subpackage": "ingestion", "file": "src/docintel/ingestion/hashing.py", "lines": 27, "docstring": "Open Doc Intelligence (docintel) - File Hashing Utilities\nStreaming cryptographic SHA-256 calculation for deduplication and integrity verification.", "size": 19}, {"id": "mod:docintel.ingestion.service", "label": "service", "full_name": "docintel.ingestion.service", "type": "module", "package": "docintel", "subpackage": "ingestion", "file": "src/docintel/ingestion/service.py", "lines": 201, "docstring": "Open Doc Intelligence (docintel) - Ingestion Service\nOrchestrates document intake, cryptographic deduplication, format validation,\natomic raw file storage, and relational job scheduling.", "size": 26}, {"id": "cls:docintel.ingestion.service.IngestionService", "label": "IngestionService", "full_name": "docintel.ingestion.service.IngestionService", "type": "class", "package": "docintel", "file": "src/docintel/ingestion/service.py", "docstring": "Handles intake, validation, deduplication, and staging of documents.", "size": 12}, {"id": "mod:docintel.ingestion.validation", "label": "validation", "full_name": "docintel.ingestion.validation", "type": "module", "package": "docintel", "subpackage": "ingestion", "file": "src/docintel/ingestion/validation.py", "lines": 125, "docstring": "Open Doc Intelligence (docintel) - Ingestion Validation & Security\nValidates MIME types, magic byte signatures, file size thresholds, and filename safety.", "size": 23}, {"id": "cls:docintel.ingestion.validation.IngestionValidationError", "label": "IngestionValidationError", "full_name": "docintel.ingestion.validation.IngestionValidationError", "type": "class", "package": "docintel", "file": "src/docintel/ingestion/validation.py", "docstring": "Raised when an ingested file violates format, size, or integrity policies.", "size": 12}, {"id": "mod:docintel.ingestion.__init__", "label": "__init__", "full_name": "docintel.ingestion.__init__", "type": "module", "package": "docintel", "subpackage": "ingestion", "file": "src/docintel/ingestion/__init__.py", "lines": 22, "docstring": "DocIntel Ingestion Package.", "size": 18}, {"id": "mod:docintel.ocr.base", "label": "base", "full_name": "docintel.ocr.base", "type": "module", "package": "docintel", "subpackage": "ocr", "file": "src/docintel/ocr/base.py", "lines": 62, "docstring": "Open Doc Intelligence (docintel) - OCR Provider Protocol\nStandard abstract contract, token representations, and result containers for\nCPU OCR engines (PaddleOCR) and Vision-Language Models (Florence-2, GOT-OCR 2.0).", "size": 20}, {"id": "cls:docintel.ocr.base.OCRToken", "label": "OCRToken", "full_name": "docintel.ocr.base.OCRToken", "type": "class", "package": "docintel", "file": "src/docintel/ocr/base.py", "docstring": "Atomic recognized word or token with spatial coordinates and confidence.", "size": 12}, {"id": "cls:docintel.ocr.base.OCRResult", "label": "OCRResult", "full_name": "docintel.ocr.base.OCRResult", "type": "class", "package": "docintel", "file": "src/docintel/ocr/base.py", "docstring": "Aggregated OCR output for a page or image.", "size": 12}, {"id": "cls:docintel.ocr.base.BaseOCRProvider", "label": "BaseOCRProvider", "full_name": "docintel.ocr.base.BaseOCRProvider", "type": "class", "package": "docintel", "file": "src/docintel/ocr/base.py", "docstring": "Abstract interface implemented by all CPU OCR and VLM backends.", "size": 12}, {"id": "mod:docintel.ocr.florence_adapter", "label": "florence_adapter", "full_name": "docintel.ocr.florence_adapter", "type": "module", "package": "docintel", "subpackage": "ocr", "file": "src/docintel/ocr/florence_adapter.py", "lines": 242, "docstring": "Open Doc Intelligence (docintel) - Microsoft Florence-2 Vision OCR Adapter\nIntegrates Florence-2 (<OCR_WITH_REGION>) for bounding-box grounded character and word extraction.\nEngineered for strict <= 4GB VRAM execution in FP16 with automated CUDA OOM fallback.", "size": 27}, {"id": "cls:docintel.ocr.florence_adapter.Florence2Adapter", "label": "Florence2Adapter", "full_name": "docintel.ocr.florence_adapter.Florence2Adapter", "type": "class", "package": "docintel", "file": "src/docintel/ocr/florence_adapter.py", "docstring": "Microsoft Florence-2 Vision-Language Model adapter.\nUses <OCR_WITH_REGION> prompt for fine-grained bounding box coordinates.", "size": 12}, {"id": "mod:docintel.ocr.glm_adapter", "label": "glm_adapter", "full_name": "docintel.ocr.glm_adapter", "type": "module", "package": "docintel", "subpackage": "ocr", "file": "src/docintel/ocr/glm_adapter.py", "lines": 309, "docstring": "Open Doc Intelligence (docintel) - GLM-OCR Multimodal Document Adapter\nIntegrates GLM-OCR (zai-org/GLM-OCR / THUDM GLM-4V architecture) for dense document parsing,\nformula translation, complex layout extraction, and handwritten recognition.\nEngineered for efficient local execution with normalized coordinate grounding.", "size": 30}, {"id": "cls:docintel.ocr.glm_adapter.GLMOCRAdapter", "label": "GLMOCRAdapter", "full_name": "docintel.ocr.glm_adapter.GLMOCRAdapter", "type": "class", "package": "docintel", "file": "src/docintel/ocr/glm_adapter.py", "docstring": "Adapter for GLM-OCR (zai-org/GLM-OCR, 0.9B parameters) multimodal vision-language model.\nOptimized for multi-column documents, table extraction, LaTeX formulas, and handwritten text.", "size": 12}, {"id": "mod:docintel.ocr.handwriting_adapter", "label": "handwriting_adapter", "full_name": "docintel.ocr.handwriting_adapter", "type": "module", "package": "docintel", "subpackage": "ocr", "file": "src/docintel/ocr/handwriting_adapter.py", "lines": 276, "docstring": "Open Doc Intelligence (docintel) - Handwritten Text Recognition (HTR) Adapter\nIntegrates Microsoft TrOCR (microsoft/trocr-base-handwritten) with adaptive stroke\nenhancement and contour-guided line extraction for freeform cursive handwriting.", "size": 29}, {"id": "cls:docintel.ocr.handwriting_adapter.HandwritingOCRAdapter", "label": "HandwritingOCRAdapter", "full_name": "docintel.ocr.handwriting_adapter.HandwritingOCRAdapter", "type": "class", "package": "docintel", "file": "src/docintel/ocr/handwriting_adapter.py", "docstring": "Adapter specialized for unconstrained freehand cursive writing, notes, and form signatures.\nCombines stroke pre-filtering with Vision Encoder-Decoder models (TrOCR).", "size": 12}, {"id": "mod:docintel.ocr.paddle_adapter", "label": "paddle_adapter", "full_name": "docintel.ocr.paddle_adapter", "type": "module", "package": "docintel", "subpackage": "ocr", "file": "src/docintel/ocr/paddle_adapter.py", "lines": 174, "docstring": "Open Doc Intelligence (docintel) - PaddleOCR CPU Adapter\nIntegrates PaddleOCR (PP-OCRv4) for low-latency, CPU-friendly text detection,\nangle classification, and character recognition.", "size": 24}, {"id": "cls:docintel.ocr.paddle_adapter.PaddleOCRAdapter", "label": "PaddleOCRAdapter", "full_name": "docintel.ocr.paddle_adapter.PaddleOCRAdapter", "type": "class", "package": "docintel", "file": "src/docintel/ocr/paddle_adapter.py", "docstring": "Adapter for PaddleOCR CPU text detection and recognition.", "size": 12}, {"id": "mod:docintel.ocr.preprocessing", "label": "preprocessing", "full_name": "docintel.ocr.preprocessing", "type": "module", "package": "docintel", "subpackage": "ocr", "file": "src/docintel/ocr/preprocessing.py", "lines": 191, "docstring": "Open Doc Intelligence (docintel) - Image Preprocessing & Scan Classification\nProvides orientation correction, DPI normalization, contrast enhancement,\nand scanned-vs-native document classification heuristics.", "size": 25}, {"id": "mod:docintel.ocr.__init__", "label": "__init__", "full_name": "docintel.ocr.__init__", "type": "module", "package": "docintel", "subpackage": "ocr", "file": "src/docintel/ocr/__init__.py", "lines": 30, "docstring": "DocIntel OCR Subsystem Package.", "size": 19}, {"id": "mod:docintel.storage.artifacts", "label": "artifacts", "full_name": "docintel.storage.artifacts", "type": "module", "package": "docintel", "subpackage": "storage", "file": "src/docintel/storage/artifacts.py", "lines": 150, "docstring": "Open Doc Intelligence (docintel) - File Artifact Storage Manager\nManages physical storage of uploaded source files, canonical JSON documents,\nextracted markdown, page raster images, and evaluation visualization artifacts.\nEnforces atomic writes via temporary files to prevent corrupt or partial reads.", "size": 24}, {"id": "cls:docintel.storage.artifacts.ArtifactManager", "label": "ArtifactManager", "full_name": "docintel.storage.artifacts.ArtifactManager", "type": "class", "package": "docintel", "file": "src/docintel/storage/artifacts.py", "docstring": "Manages files and structured directories for processed documents.", "size": 12}, {"id": "mod:docintel.storage.database", "label": "database", "full_name": "docintel.storage.database", "type": "module", "package": "docintel", "subpackage": "storage", "file": "src/docintel/storage/database.py", "lines": 131, "docstring": "Open Doc Intelligence (docintel) - Database Engine & Connection Management\nAsync SQLAlchemy 2.0 connection pooling, dual PostgreSQL/SQLite lifecycle management,\nand FastAPI dependency injection session factory.", "size": 23}, {"id": "mod:docintel.storage.models", "label": "models", "full_name": "docintel.storage.models", "type": "module", "package": "docintel", "subpackage": "storage", "file": "src/docintel/storage/models.py", "lines": 285, "docstring": "Open Doc Intelligence (docintel) - SQLAlchemy 2.0 ORM Models\nDefines PostgreSQL/SQLite compatible relational schema for documents, processing jobs,\nextracted pages, layout elements with bounding boxes, generated artifacts, model runs,\nand visual evaluation metrics.", "size": 29}, {"id": "cls:docintel.storage.models.Base", "label": "Base", "full_name": "docintel.storage.models.Base", "type": "class", "package": "docintel", "file": "src/docintel/storage/models.py", "docstring": "Declarative base class for all DocIntel ORM entities.", "size": 12}, {"id": "cls:docintel.storage.models.DocumentModel", "label": "DocumentModel", "full_name": "docintel.storage.models.DocumentModel", "type": "class", "package": "docintel", "file": "src/docintel/storage/models.py", "docstring": "Ingested document root entity representing an uploaded PDF, image, or office file.\nTracks raw file metadata, content hash, ingestion status, and page breakdown.", "size": 12}, {"id": "cls:docintel.storage.models.JobModel", "label": "JobModel", "full_name": "docintel.storage.models.JobModel", "type": "class", "package": "docintel", "file": "src/docintel/storage/models.py", "docstring": "Asynchronous processing job or workflow execution unit for a document.\nTracks state transitions, error messages, retry counts, and execution progress.", "size": 12}, {"id": "cls:docintel.storage.models.PageModel", "label": "PageModel", "full_name": "docintel.storage.models.PageModel", "type": "class", "package": "docintel", "file": "src/docintel/storage/models.py", "docstring": "Individual document page metadata (dimensions, orientation, scan classification).", "size": 12}, {"id": "cls:docintel.storage.models.ElementModel", "label": "ElementModel", "full_name": "docintel.storage.models.ElementModel", "type": "class", "package": "docintel", "file": "src/docintel/storage/models.py", "docstring": "Atomic structural document element (title, paragraph, table, code, formula)\nextracted by Docling or OCR, with normalized bounding boxes and reading order.", "size": 12}, {"id": "cls:docintel.storage.models.ArtifactModel", "label": "ArtifactModel", "full_name": "docintel.storage.models.ArtifactModel", "type": "class", "package": "docintel", "file": "src/docintel/storage/models.py", "docstring": "Generated physical file artifact created during document processing\n(e.g., document.json, document.md, metadata.json, page PNGs, debug overlays).", "size": 12}, {"id": "cls:docintel.storage.models.ModelRunModel", "label": "ModelRunModel", "full_name": "docintel.storage.models.ModelRunModel", "type": "class", "package": "docintel", "file": "src/docintel/storage/models.py", "docstring": "Tracks inference telemetry for VLM and OCR models\n(model name, runtime duration, peak VRAM allocated, and OOM fallbacks).", "size": 12}, {"id": "cls:docintel.storage.models.EvaluationScoreModel", "label": "EvaluationScoreModel", "full_name": "docintel.storage.models.EvaluationScoreModel", "type": "class", "package": "docintel", "file": "src/docintel/storage/models.py", "docstring": "Stores quantitative evaluation metrics (CER, WER, Field F1, Table accuracy, latency)\nassociated with ground-truth comparison benchmarks.", "size": 12}, {"id": "mod:docintel.storage.repositories", "label": "repositories", "full_name": "docintel.storage.repositories", "type": "module", "package": "docintel", "subpackage": "storage", "file": "src/docintel/storage/repositories.py", "lines": 400, "docstring": "Open Doc Intelligence (docintel) - Data Access Layer (Repositories)\nEncapsulates CRUD operations, pagination, atomic updates, and relational queries\nacross documents, jobs, pages, elements, artifacts, and evaluations.", "size": 34}, {"id": "cls:docintel.storage.repositories.DocumentRepository", "label": "DocumentRepository", "full_name": "docintel.storage.repositories.DocumentRepository", "type": "class", "package": "docintel", "file": "src/docintel/storage/repositories.py", "docstring": "Repository handling document lifecycle and relational retrieval.", "size": 12}, {"id": "cls:docintel.storage.repositories.JobRepository", "label": "JobRepository", "full_name": "docintel.storage.repositories.JobRepository", "type": "class", "package": "docintel", "file": "src/docintel/storage/repositories.py", "docstring": "Repository handling asynchronous job scheduling and state transitions.", "size": 12}, {"id": "cls:docintel.storage.repositories.PageRepository", "label": "PageRepository", "full_name": "docintel.storage.repositories.PageRepository", "type": "class", "package": "docintel", "file": "src/docintel/storage/repositories.py", "docstring": "Repository handling document page records.", "size": 12}, {"id": "cls:docintel.storage.repositories.ElementRepository", "label": "ElementRepository", "full_name": "docintel.storage.repositories.ElementRepository", "type": "class", "package": "docintel", "file": "src/docintel/storage/repositories.py", "docstring": "Repository handling atomic structural elements and bounding boxes.", "size": 12}, {"id": "cls:docintel.storage.repositories.ArtifactRepository", "label": "ArtifactRepository", "full_name": "docintel.storage.repositories.ArtifactRepository", "type": "class", "package": "docintel", "file": "src/docintel/storage/repositories.py", "docstring": "Repository handling file artifact registries.", "size": 12}, {"id": "cls:docintel.storage.repositories.EvaluationRepository", "label": "EvaluationRepository", "full_name": "docintel.storage.repositories.EvaluationRepository", "type": "class", "package": "docintel", "file": "src/docintel/storage/repositories.py", "docstring": "Repository handling quantitative evaluation benchmarks.", "size": 12}, {"id": "mod:docintel.storage.__init__", "label": "__init__", "full_name": "docintel.storage.__init__", "type": "module", "package": "docintel", "subpackage": "storage", "file": "src/docintel/storage/__init__.py", "lines": 51, "docstring": "DocIntel Storage & Persistence Package.", "size": 20}, {"id": "mod:docintel.storage.migrations.env", "label": "env", "full_name": "docintel.storage.migrations.env", "type": "module", "package": "docintel", "subpackage": "storage", "file": "src/docintel/storage/migrations/env.py", "lines": 81, "docstring": "Open Doc Intelligence (docintel) - Alembic Environment Configuration\nSupports both PostgreSQL (psycopg2) and SQLite sync drivers for migration execution,\nwith batch-mode schema manipulation and Base.metadata introspection.", "size": 21}, {"id": "mod:docintel.storage.migrations.versions.001_initial_schema", "label": "001_initial_schema", "full_name": "docintel.storage.migrations.versions.001_initial_schema", "type": "module", "package": "docintel", "subpackage": "storage", "file": "src/docintel/storage/migrations/versions/001_initial_schema.py", "lines": 179, "docstring": "Initial schema creation for DocIntel\n\nRevision ID: 001_initial_schema\nRevises: \nCreate Date: 2026-10-14 23:20:00.000000", "size": 25}, {"id": "mod:docintel.workflows.graph", "label": "graph", "full_name": "docintel.workflows.graph", "type": "module", "package": "docintel", "subpackage": "workflows", "file": "src/docintel/workflows/graph.py", "lines": 127, "docstring": "LangGraph Document Processing Workflow Graph.\nBuilds and compiles the StateGraph directed acyclic graph (DAG) for multi-stage document intelligence,\nsupporting atomic state checkpointing and step execution.", "size": 23}, {"id": "cls:docintel.workflows.graph.NativeWorkflowRunner", "label": "NativeWorkflowRunner", "full_name": "docintel.workflows.graph.NativeWorkflowRunner", "type": "class", "package": "docintel", "file": "src/docintel/workflows/graph.py", "docstring": "Fallback runner executing workflow nodes in sequential DAG order with checkpointing.", "size": 12}, {"id": "mod:docintel.workflows.nodes", "label": "nodes", "full_name": "docintel.workflows.nodes", "type": "module", "package": "docintel", "subpackage": "workflows", "file": "src/docintel/workflows/nodes.py", "lines": 365, "docstring": "LangGraph Workflow DAG Nodes for Open Doc Intelligence.\nDefines atomic coroutines for input validation, format sniffing, engine routing,\nspatial coordinate extraction, canonical synthesis, and artifact persistence.", "size": 32}, {"id": "mod:docintel.workflows.state", "label": "state", "full_name": "docintel.workflows.state", "type": "module", "package": "docintel", "subpackage": "workflows", "file": "src/docintel/workflows/state.py", "lines": 44, "docstring": "Workflow State Schema for LangGraph Document Processing Pipeline.\nStores immutable document identifiers, processing metadata, extraction results,\nand telemetry thoughts across DAG transitions.", "size": 19}, {"id": "cls:docintel.workflows.state.WorkflowThought", "label": "WorkflowThought", "full_name": "docintel.workflows.state.WorkflowThought", "type": "class", "package": "docintel", "file": "src/docintel/workflows/state.py", "docstring": "", "size": 12}, {"id": "cls:docintel.workflows.state.WorkflowState", "label": "WorkflowState", "full_name": "docintel.workflows.state.WorkflowState", "type": "class", "package": "docintel", "file": "src/docintel/workflows/state.py", "docstring": "", "size": 12}, {"id": "mod:docintel.workflows.__init__", "label": "__init__", "full_name": "docintel.workflows.__init__", "type": "module", "package": "docintel", "subpackage": "workflows", "file": "src/docintel/workflows/__init__.py", "lines": 9, "docstring": "Open Doc Intelligence - LangGraph Workflow Engine Package\nProvides resumable state graph DAG orchestration for document ingestion, routing, and OCR extraction.", "size": 18}, {"id": "mod:apps.api.main", "label": "main", "full_name": "apps.api.main", "type": "module", "package": "apps", "subpackage": "api", "file": "apps/api/main.py", "lines": 697, "docstring": "Open Doc Intelligence (docintel) - FastAPI Application\nProvides asynchronous REST endpoints for document ingestion, background pipeline execution,\nstatus polling, artifact retrieval, element extraction, and document deletion.", "size": 38}, {"id": "fn:apps.api.main.serve_dashboard", "label": "serve_dashboard", "full_name": "apps.api.main.serve_dashboard", "type": "route", "package": "apps", "file": "apps/api/main.py", "docstring": "Serve the interactive Neumorphic OCR Dashboard.", "size": 10}, {"id": "fn:apps.api.main.get_interactive_sample", "label": "get_interactive_sample", "full_name": "apps.api.main.get_interactive_sample", "type": "route", "package": "apps", "file": "apps/api/main.py", "docstring": "Retrieve pre-computed interactive demo sample documents with spatial bounding boxes.", "size": 10}, {"id": "fn:apps.api.main.health_check", "label": "health_check", "full_name": "apps.api.main.health_check", "type": "route", "package": "apps", "file": "apps/api/main.py", "docstring": "Health check endpoint verifying application and database connectivity.", "size": 10}, {"id": "fn:apps.api.main.run_diagnostics", "label": "run_diagnostics", "full_name": "apps.api.main.run_diagnostics", "type": "route", "package": "apps", "file": "apps/api/main.py", "docstring": "Run environmental checks and report hardware/runtime readiness.", "size": 10}, {"id": "fn:apps.api.main.upload_document", "label": "upload_document", "full_name": "apps.api.main.upload_document", "type": "route", "package": "apps", "file": "apps/api/main.py", "docstring": "Upload and stage a document for processing.\nValidates file format, performs cryptographic deduplication, and queues processing in the background.", "size": 10}, {"id": "fn:apps.api.main.trigger_document_process", "label": "trigger_document_process", "full_name": "apps.api.main.trigger_document_process", "type": "route", "package": "apps", "file": "apps/api/main.py", "docstring": "Manually trigger or retry OCR extraction for an existing document with the selected engine.", "size": 10}, {"id": "fn:apps.api.main.list_documents", "label": "list_documents", "full_name": "apps.api.main.list_documents", "type": "route", "package": "apps", "file": "apps/api/main.py", "docstring": "Retrieve paginated list of ingested documents.", "size": 10}, {"id": "fn:apps.api.main.get_document", "label": "get_document", "full_name": "apps.api.main.get_document", "type": "route", "package": "apps", "file": "apps/api/main.py", "docstring": "Retrieve document metadata, pages, and generated artifact references.", "size": 10}, {"id": "fn:apps.api.main.get_document_elements", "label": "get_document_elements", "full_name": "apps.api.main.get_document_elements", "type": "route", "package": "apps", "file": "apps/api/main.py", "docstring": "Retrieve all extracted text elements, tables, and bounding boxes for a document with page context.", "size": 10}, {"id": "fn:apps.api.main.get_document_artifact", "label": "get_document_artifact", "full_name": "apps.api.main.get_document_artifact", "type": "route", "package": "apps", "file": "apps/api/main.py", "docstring": "Download a specific generated artifact (e.g. document_json, document_md).", "size": 10}, {"id": "fn:apps.api.main.get_document_page_image", "label": "get_document_page_image", "full_name": "apps.api.main.get_document_page_image", "type": "route", "package": "apps", "file": "apps/api/main.py", "docstring": "Retrieve rendered raster image preview for a document page.", "size": 10}, {"id": "fn:apps.api.main.get_document_raw_file", "label": "get_document_raw_file", "full_name": "apps.api.main.get_document_raw_file", "type": "route", "package": "apps", "file": "apps/api/main.py", "docstring": "Download or view the raw uploaded document file.", "size": 10}, {"id": "fn:apps.api.main.delete_document", "label": "delete_document", "full_name": "apps.api.main.delete_document", "type": "route", "package": "apps", "file": "apps/api/main.py", "docstring": "Delete a document, cascade-deleting its relational elements, pages, jobs, and artifacts,\nand permanently purging all uploaded and extracted files from disk.", "size": 10}, {"id": "fn:apps.api.main.get_job_status", "label": "get_job_status", "full_name": "apps.api.main.get_job_status", "type": "route", "package": "apps", "file": "apps/api/main.py", "docstring": "Retrieve processing progress, status, and live Chain of Thought logs for an asynchronous job.", "size": 10}, {"id": "fn:apps.api.main.get_job_thoughts", "label": "get_job_thoughts", "full_name": "apps.api.main.get_job_thoughts", "type": "route", "package": "apps", "file": "apps/api/main.py", "docstring": "Retrieve live chain of thoughts and reasoning steps for a document job.", "size": 10}, {"id": "mod:apps.api.__init__", "label": "__init__", "full_name": "apps.api.__init__", "type": "module", "package": "apps", "subpackage": "api", "file": "apps/api/__init__.py", "lines": 1, "docstring": "DocIntel API Package.", "size": 18}];
+    const rawEdges = [{"source": "mod:docintel.config.settings", "target": "cls:docintel.config.settings.Settings", "type": "contains"}, {"source": "mod:docintel.core.schemas", "target": "cls:docintel.core.schemas.CoordSystem", "type": "contains"}, {"source": "mod:docintel.core.schemas", "target": "cls:docintel.core.schemas.ElementType", "type": "contains"}, {"source": "mod:docintel.core.schemas", "target": "cls:docintel.core.schemas.BoundingBox", "type": "contains"}, {"source": "mod:docintel.core.schemas", "target": "cls:docintel.core.schemas.PageMetadata", "type": "contains"}, {"source": "mod:docintel.core.schemas", "target": "cls:docintel.core.schemas.DocumentElement", "type": "contains"}, {"source": "mod:docintel.core.schemas", "target": "cls:docintel.core.schemas.DocumentMetadata", "type": "contains"}, {"source": "mod:docintel.core.schemas", "target": "cls:docintel.core.schemas.CanonicalDocument", "type": "contains"}, {"source": "mod:docintel.core.schemas", "target": "cls:docintel.core.schemas.IngestResponse", "type": "contains"}, {"source": "mod:docintel.core.schemas", "target": "cls:docintel.core.schemas.JobStatusResponse", "type": "contains"}, {"source": "mod:docintel.extractors.base", "target": "cls:docintel.extractors.base.BaseExtractor", "type": "contains"}, {"source": "mod:docintel.extractors.docling_adapter", "target": "cls:docintel.extractors.docling_adapter.DoclingAdapter", "type": "contains"}, {"source": "mod:docintel.extractors.text_extractor", "target": "cls:docintel.extractors.text_extractor.TextExtractor", "type": "contains"}, {"source": "mod:docintel.ingestion.service", "target": "cls:docintel.ingestion.service.IngestionService", "type": "contains"}, {"source": "mod:docintel.ingestion.validation", "target": "cls:docintel.ingestion.validation.IngestionValidationError", "type": "contains"}, {"source": "mod:docintel.ocr.base", "target": "cls:docintel.ocr.base.OCRToken", "type": "contains"}, {"source": "mod:docintel.ocr.base", "target": "cls:docintel.ocr.base.OCRResult", "type": "contains"}, {"source": "mod:docintel.ocr.base", "target": "cls:docintel.ocr.base.BaseOCRProvider", "type": "contains"}, {"source": "mod:docintel.ocr.florence_adapter", "target": "cls:docintel.ocr.florence_adapter.Florence2Adapter", "type": "contains"}, {"source": "mod:docintel.ocr.glm_adapter", "target": "cls:docintel.ocr.glm_adapter.GLMOCRAdapter", "type": "contains"}, {"source": "mod:docintel.ocr.handwriting_adapter", "target": "cls:docintel.ocr.handwriting_adapter.HandwritingOCRAdapter", "type": "contains"}, {"source": "mod:docintel.ocr.paddle_adapter", "target": "cls:docintel.ocr.paddle_adapter.PaddleOCRAdapter", "type": "contains"}, {"source": "mod:docintel.storage.artifacts", "target": "cls:docintel.storage.artifacts.ArtifactManager", "type": "contains"}, {"source": "mod:docintel.storage.models", "target": "cls:docintel.storage.models.Base", "type": "contains"}, {"source": "mod:docintel.storage.models", "target": "cls:docintel.storage.models.DocumentModel", "type": "contains"}, {"source": "mod:docintel.storage.models", "target": "cls:docintel.storage.models.JobModel", "type": "contains"}, {"source": "mod:docintel.storage.models", "target": "cls:docintel.storage.models.PageModel", "type": "contains"}, {"source": "mod:docintel.storage.models", "target": "cls:docintel.storage.models.ElementModel", "type": "contains"}, {"source": "mod:docintel.storage.models", "target": "cls:docintel.storage.models.ArtifactModel", "type": "contains"}, {"source": "mod:docintel.storage.models", "target": "cls:docintel.storage.models.ModelRunModel", "type": "contains"}, {"source": "mod:docintel.storage.models", "target": "cls:docintel.storage.models.EvaluationScoreModel", "type": "contains"}, {"source": "mod:docintel.storage.repositories", "target": "cls:docintel.storage.repositories.DocumentRepository", "type": "contains"}, {"source": "mod:docintel.storage.repositories", "target": "cls:docintel.storage.repositories.JobRepository", "type": "contains"}, {"source": "mod:docintel.storage.repositories", "target": "cls:docintel.storage.repositories.PageRepository", "type": "contains"}, {"source": "mod:docintel.storage.repositories", "target": "cls:docintel.storage.repositories.ElementRepository", "type": "contains"}, {"source": "mod:docintel.storage.repositories", "target": "cls:docintel.storage.repositories.ArtifactRepository", "type": "contains"}, {"source": "mod:docintel.storage.repositories", "target": "cls:docintel.storage.repositories.EvaluationRepository", "type": "contains"}, {"source": "mod:docintel.workflows.graph", "target": "cls:docintel.workflows.graph.NativeWorkflowRunner", "type": "contains"}, {"source": "mod:docintel.workflows.state", "target": "cls:docintel.workflows.state.WorkflowThought", "type": "contains"}, {"source": "mod:docintel.workflows.state", "target": "cls:docintel.workflows.state.WorkflowState", "type": "contains"}, {"source": "mod:apps.api.main", "target": "fn:apps.api.main.serve_dashboard", "type": "defines_route"}, {"source": "mod:apps.api.main", "target": "fn:apps.api.main.get_interactive_sample", "type": "defines_route"}, {"source": "mod:apps.api.main", "target": "fn:apps.api.main.health_check", "type": "defines_route"}, {"source": "mod:apps.api.main", "target": "fn:apps.api.main.run_diagnostics", "type": "defines_route"}, {"source": "mod:apps.api.main", "target": "fn:apps.api.main.upload_document", "type": "defines_route"}, {"source": "mod:apps.api.main", "target": "fn:apps.api.main.trigger_document_process", "type": "defines_route"}, {"source": "mod:apps.api.main", "target": "fn:apps.api.main.list_documents", "type": "defines_route"}, {"source": "mod:apps.api.main", "target": "fn:apps.api.main.get_document", "type": "defines_route"}, {"source": "mod:apps.api.main", "target": "fn:apps.api.main.get_document_elements", "type": "defines_route"}, {"source": "mod:apps.api.main", "target": "fn:apps.api.main.get_document_artifact", "type": "defines_route"}, {"source": "mod:apps.api.main", "target": "fn:apps.api.main.get_document_page_image", "type": "defines_route"}, {"source": "mod:apps.api.main", "target": "fn:apps.api.main.get_document_raw_file", "type": "defines_route"}, {"source": "mod:apps.api.main", "target": "fn:apps.api.main.delete_document", "type": "defines_route"}, {"source": "mod:apps.api.main", "target": "fn:apps.api.main.get_job_status", "type": "defines_route"}, {"source": "mod:apps.api.main", "target": "fn:apps.api.main.get_job_thoughts", "type": "defines_route"}, {"source": "mod:docintel.cli", "target": "mod:docintel.config.settings", "type": "imports"}, {"source": "mod:docintel.config.__init__", "target": "mod:docintel.config.settings", "type": "imports"}, {"source": "mod:docintel.core.__init__", "target": "mod:docintel.core.schemas", "type": "imports"}, {"source": "mod:docintel.evaluation.reports", "target": "mod:docintel.evaluation.charts", "type": "imports"}, {"source": "mod:docintel.evaluation.__init__", "target": "mod:docintel.evaluation.charts", "type": "imports"}, {"source": "mod:docintel.evaluation.__init__", "target": "mod:docintel.evaluation.metrics_text", "type": "imports"}, {"source": "mod:docintel.evaluation.__init__", "target": "mod:docintel.evaluation.reports", "type": "imports"}, {"source": "mod:docintel.extractors.base", "target": "mod:docintel.core.schemas", "type": "imports"}, {"source": "mod:docintel.extractors.docling_adapter", "target": "mod:docintel.core.schemas", "type": "imports"}, {"source": "mod:docintel.extractors.docling_adapter", "target": "mod:docintel.extractors.base", "type": "imports"}, {"source": "mod:docintel.extractors.docling_adapter", "target": "mod:docintel.ingestion.hashing", "type": "imports"}, {"source": "mod:docintel.extractors.docling_adapter", "target": "mod:docintel.storage.artifacts", "type": "imports"}, {"source": "mod:docintel.extractors.docling_adapter", "target": "mod:docintel.ocr.florence_adapter", "type": "imports"}, {"source": "mod:docintel.extractors.docling_adapter", "target": "mod:docintel.ocr.glm_adapter", "type": "imports"}, {"source": "mod:docintel.extractors.docling_adapter", "target": "mod:docintel.ocr.handwriting_adapter", "type": "imports"}, {"source": "mod:docintel.extractors.docling_adapter", "target": "mod:docintel.ocr.paddle_adapter", "type": "imports"}, {"source": "mod:docintel.extractors.text_extractor", "target": "mod:docintel.core.schemas", "type": "imports"}, {"source": "mod:docintel.extractors.text_extractor", "target": "mod:docintel.extractors.base", "type": "imports"}, {"source": "mod:docintel.extractors.text_extractor", "target": "mod:docintel.ingestion.hashing", "type": "imports"}, {"source": "mod:docintel.extractors.__init__", "target": "mod:docintel.extractors.base", "type": "imports"}, {"source": "mod:docintel.extractors.__init__", "target": "mod:docintel.extractors.docling_adapter", "type": "imports"}, {"source": "mod:docintel.extractors.__init__", "target": "mod:docintel.extractors.text_extractor", "type": "imports"}, {"source": "mod:docintel.ingestion.service", "target": "mod:docintel.core.schemas", "type": "imports"}, {"source": "mod:docintel.ingestion.service", "target": "mod:docintel.ingestion.hashing", "type": "imports"}, {"source": "mod:docintel.ingestion.service", "target": "mod:docintel.ingestion.validation", "type": "imports"}, {"source": "mod:docintel.ingestion.service", "target": "mod:docintel.storage.artifacts", "type": "imports"}, {"source": "mod:docintel.ingestion.service", "target": "mod:docintel.storage.repositories", "type": "imports"}, {"source": "mod:docintel.ingestion.validation", "target": "mod:docintel.config.settings", "type": "imports"}, {"source": "mod:docintel.ingestion.__init__", "target": "mod:docintel.ingestion.hashing", "type": "imports"}, {"source": "mod:docintel.ingestion.__init__", "target": "mod:docintel.ingestion.service", "type": "imports"}, {"source": "mod:docintel.ingestion.__init__", "target": "mod:docintel.ingestion.validation", "type": "imports"}, {"source": "mod:docintel.ocr.base", "target": "mod:docintel.core.schemas", "type": "imports"}, {"source": "mod:docintel.ocr.florence_adapter", "target": "mod:docintel.config.settings", "type": "imports"}, {"source": "mod:docintel.ocr.florence_adapter", "target": "mod:docintel.core.schemas", "type": "imports"}, {"source": "mod:docintel.ocr.florence_adapter", "target": "mod:docintel.ocr.base", "type": "imports"}, {"source": "mod:docintel.ocr.glm_adapter", "target": "mod:docintel.config.settings", "type": "imports"}, {"source": "mod:docintel.ocr.glm_adapter", "target": "mod:docintel.core.schemas", "type": "imports"}, {"source": "mod:docintel.ocr.glm_adapter", "target": "mod:docintel.ocr.base", "type": "imports"}, {"source": "mod:docintel.ocr.handwriting_adapter", "target": "mod:docintel.config.settings", "type": "imports"}, {"source": "mod:docintel.ocr.handwriting_adapter", "target": "mod:docintel.core.schemas", "type": "imports"}, {"source": "mod:docintel.ocr.handwriting_adapter", "target": "mod:docintel.ocr.base", "type": "imports"}, {"source": "mod:docintel.ocr.handwriting_adapter", "target": "mod:docintel.ocr.preprocessing", "type": "imports"}, {"source": "mod:docintel.ocr.paddle_adapter", "target": "mod:docintel.core.schemas", "type": "imports"}, {"source": "mod:docintel.ocr.paddle_adapter", "target": "mod:docintel.ocr.base", "type": "imports"}, {"source": "mod:docintel.ocr.__init__", "target": "mod:docintel.ocr.base", "type": "imports"}, {"source": "mod:docintel.ocr.__init__", "target": "mod:docintel.ocr.florence_adapter", "type": "imports"}, {"source": "mod:docintel.ocr.__init__", "target": "mod:docintel.ocr.glm_adapter", "type": "imports"}, {"source": "mod:docintel.ocr.__init__", "target": "mod:docintel.ocr.handwriting_adapter", "type": "imports"}, {"source": "mod:docintel.ocr.__init__", "target": "mod:docintel.ocr.paddle_adapter", "type": "imports"}, {"source": "mod:docintel.ocr.__init__", "target": "mod:docintel.ocr.preprocessing", "type": "imports"}, {"source": "mod:docintel.storage.artifacts", "target": "mod:docintel.config.settings", "type": "imports"}, {"source": "mod:docintel.storage.artifacts", "target": "mod:docintel.core.schemas", "type": "imports"}, {"source": "mod:docintel.storage.database", "target": "mod:docintel.config.settings", "type": "imports"}, {"source": "mod:docintel.storage.repositories", "target": "mod:docintel.storage.models", "type": "imports"}, {"source": "mod:docintel.storage.__init__", "target": "mod:docintel.storage.database", "type": "imports"}, {"source": "mod:docintel.storage.__init__", "target": "mod:docintel.storage.models", "type": "imports"}, {"source": "mod:docintel.storage.__init__", "target": "mod:docintel.storage.repositories", "type": "imports"}, {"source": "mod:docintel.storage.migrations.env", "target": "mod:docintel.config.settings", "type": "imports"}, {"source": "mod:docintel.storage.migrations.env", "target": "mod:docintel.storage.models", "type": "imports"}, {"source": "mod:docintel.workflows.graph", "target": "mod:docintel.workflows.nodes", "type": "imports"}, {"source": "mod:docintel.workflows.graph", "target": "mod:docintel.workflows.state", "type": "imports"}, {"source": "mod:docintel.workflows.nodes", "target": "mod:docintel.extractors.docling_adapter", "type": "imports"}, {"source": "mod:docintel.workflows.nodes", "target": "mod:docintel.extractors.text_extractor", "type": "imports"}, {"source": "mod:docintel.workflows.nodes", "target": "mod:docintel.ingestion.hashing", "type": "imports"}, {"source": "mod:docintel.workflows.nodes", "target": "mod:docintel.ingestion.validation", "type": "imports"}, {"source": "mod:docintel.workflows.nodes", "target": "mod:docintel.ocr.glm_adapter", "type": "imports"}, {"source": "mod:docintel.workflows.nodes", "target": "mod:docintel.ocr.handwriting_adapter", "type": "imports"}, {"source": "mod:docintel.workflows.nodes", "target": "mod:docintel.storage.artifacts", "type": "imports"}, {"source": "mod:docintel.workflows.nodes", "target": "mod:docintel.workflows.state", "type": "imports"}, {"source": "mod:docintel.workflows.__init__", "target": "mod:docintel.workflows.graph", "type": "imports"}, {"source": "mod:docintel.workflows.__init__", "target": "mod:docintel.workflows.state", "type": "imports"}, {"source": "mod:apps.api.main", "target": "mod:docintel.config.settings", "type": "imports"}, {"source": "mod:apps.api.main", "target": "mod:docintel.core.schemas", "type": "imports"}, {"source": "mod:apps.api.main", "target": "mod:docintel.extractors.docling_adapter", "type": "imports"}, {"source": "mod:apps.api.main", "target": "mod:docintel.extractors.text_extractor", "type": "imports"}, {"source": "mod:apps.api.main", "target": "mod:docintel.ingestion.service", "type": "imports"}, {"source": "mod:apps.api.main", "target": "mod:docintel.ingestion.validation", "type": "imports"}, {"source": "mod:apps.api.main", "target": "mod:docintel.storage.artifacts", "type": "imports"}, {"source": "mod:apps.api.main", "target": "mod:docintel.storage.database", "type": "imports"}, {"source": "mod:apps.api.main", "target": "mod:docintel.storage.models", "type": "imports"}, {"source": "mod:apps.api.main", "target": "mod:docintel.storage.repositories", "type": "imports"}];
+    const rawStats = {"total_modules": 38, "total_classes": 40, "total_functions": 172, "total_lines": 5593, "total_nodes": 93, "total_edges": 136, "packages": {"docintel": 36, "apps": 2}};
+
+    document.getElementById("stat-mods").innerText = rawStats.total_modules;
+    document.getElementById("stat-classes").innerText = rawStats.total_classes;
+    document.getElementById("stat-fns").innerText = rawStats.total_functions;
+    document.getElementById("stat-nodes").innerText = rawStats.total_nodes;
+    document.getElementById("stat-edges").innerText = rawStats.total_edges;
+
+    const canvas = document.getElementById("graphCanvas");
+    const ctx = canvas.getContext("2d");
+
+    let width = canvas.parentElement.clientWidth;
+    let height = canvas.parentElement.clientHeight;
+    canvas.width = width;
+    canvas.height = height;
+
+    window.addEventListener("resize", () => {
+      width = canvas.parentElement.clientWidth;
+      height = canvas.parentElement.clientHeight;
+      canvas.width = width;
+      canvas.height = height;
+    });
+
+    // Initialize node physics positions
+    const nodes = rawNodes.map(n => ({
+      ...n,
+      x: width / 2 + (Math.random() - 0.5) * width * 0.6,
+      y: height / 2 + (Math.random() - 0.5) * height * 0.6,
+      vx: 0,
+      vy: 0,
+      radius: n.size || 14
+    }));
+
+    const nodeMap = new Map();
+    nodes.forEach(n => nodeMap.set(n.id, n));
+
+    const edges = rawEdges.map(e => ({
+      ...e,
+      sourceNode: nodeMap.get(e.source),
+      targetNode: nodeMap.get(e.target)
+    })).filter(e => e.sourceNode && e.targetNode);
+
+    let showModules = true;
+    let showClasses = true;
+    let showRoutes = true;
+    let searchTerm = "";
+    let selectedNode = null;
+    let hoveredNode = null;
+
+    let zoom = 1.0;
+    let panX = 0;
+    let panY = 0;
+    let isDragging = false;
+    let dragStart = { x: 0, y: 0 };
+    let draggedNode = null;
+
+    function getNodeColor(n) {
+      if (n.type === "module") return "#58a6ff";
+      if (n.type === "class") return "#bc8cff";
+      if (n.type === "route") return "#3fb950";
+      return "#8b949e";
+    }
+
+    function isNodeVisible(n) {
+      if (n.type === "module" && !showModules) return false;
+      if (n.type === "class" && !showClasses) return false;
+      if (n.type === "route" && !showRoutes) return false;
+      if (searchTerm) {
+        return n.full_name.toLowerCase().includes(searchTerm) || n.label.toLowerCase().includes(searchTerm);
+      }
+      return true;
+    }
+
+    function simulate() {
+      const kRepel = 2200;
+      const kSpring = 0.03;
+      const damping = 0.88;
+
+      for (let i = 0; i < nodes.length; i++) {
+        const a = nodes[i];
+        if (!isNodeVisible(a)) continue;
+
+        // Center gravity
+        a.vx += (width / 2 - a.x) * 0.001;
+        a.vy += (height / 2 - a.y) * 0.001;
+
+        // Repulsion between nodes
+        for (let j = i + 1; j < nodes.length; j++) {
+          const b = nodes[j];
+          if (!isNodeVisible(b)) continue;
+          const dx = b.x - a.x;
+          const dy = b.y - a.y;
+          const distSq = dx * dx + dy * dy + 1;
+          const dist = Math.sqrt(distSq);
+          if (dist < 400) {
+            const f = kRepel / distSq;
+            const fx = (dx / dist) * f;
+            const fy = (dy / dist) * f;
+            a.vx -= fx;
+            a.vy -= fy;
+            b.vx += fx;
+            b.vy += fy;
+          }
+        }
+      }
+
+      // Spring attraction along edges
+      for (const e of edges) {
+        if (!isNodeVisible(e.sourceNode) || !isNodeVisible(e.targetNode)) continue;
+        const dx = e.targetNode.x - e.sourceNode.x;
+        const dy = e.targetNode.y - e.sourceNode.y;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        const targetDist = e.type === "contains" ? 50 : 120;
+        const force = (dist - targetDist) * kSpring;
+        const fx = (dx / dist) * force;
+        const fy = (dy / dist) * force;
+
+        e.sourceNode.vx += fx;
+        e.sourceNode.vy += fy;
+        e.targetNode.vx -= fx;
+        e.targetNode.vy -= fy;
+      }
+
+      // Apply velocity
+      for (const n of nodes) {
+        if (n === draggedNode) continue;
+        n.vx *= damping;
+        n.vy *= damping;
+        n.x += n.vx;
+        n.y += n.vy;
+      }
+    }
+
+    function render() {
+      ctx.clearRect(0, 0, width, height);
+
+      ctx.save();
+      ctx.translate(panX, panY);
+      ctx.scale(zoom, zoom);
+
+      // Draw edges
+      for (const e of edges) {
+        if (!isNodeVisible(e.sourceNode) || !isNodeVisible(e.targetNode)) continue;
+        ctx.beginPath();
+        ctx.moveTo(e.sourceNode.x, e.sourceNode.y);
+        ctx.lineTo(e.targetNode.x, e.targetNode.y);
+        ctx.strokeStyle = e.type === "contains" ? "rgba(139, 148, 158, 0.25)" : "rgba(88, 166, 255, 0.35)";
+        ctx.lineWidth = e.type === "contains" ? 1 : 1.5;
+        ctx.stroke();
+      }
+
+      // Draw nodes
+      for (const n of nodes) {
+        if (!isNodeVisible(n)) continue;
+
+        const isHovered = n === hoveredNode;
+        const isSelected = n === selectedNode;
+
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.radius + (isHovered || isSelected ? 4 : 0), 0, Math.PI * 2);
+        ctx.fillStyle = getNodeColor(n);
+        ctx.fill();
+
+        if (isSelected) {
+          ctx.strokeStyle = "#ffffff";
+          ctx.lineWidth = 3;
+          ctx.stroke();
+        } else if (isHovered) {
+          ctx.strokeStyle = "#58a6ff";
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+
+        // Text label
+        ctx.font = `${n.type === "module" ? "bold 11px" : "10px"} sans-serif`;
+        ctx.fillStyle = "#e6edf3";
+        ctx.textAlign = "center";
+        ctx.fillText(n.label, n.x, n.y + n.radius + 12);
+      }
+
+      ctx.restore();
+    }
+
+    function loop() {
+      simulate();
+      render();
+      requestAnimationFrame(loop);
+    }
+    loop();
+
+    // Mouse Interactions
+    function getMousePos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.clientX - rect.left;
+      const clientY = e.clientY - rect.top;
+      return {
+        screenX: clientX,
+        screenY: clientY,
+        worldX: (clientX - panX) / zoom,
+        worldY: (clientY - panY) / zoom
+      };
+    }
+
+    function findNodeAt(worldX, worldY) {
+      for (let i = nodes.length - 1; i >= 0; i--) {
+        const n = nodes[i];
+        if (!isNodeVisible(n)) continue;
+        const dx = n.x - worldX;
+        const dy = n.y - worldY;
+        if (dx * dx + dy * dy <= (n.radius + 5) * (n.radius + 5)) {
+          return n;
+        }
+      }
+      return null;
+    }
+
+    canvas.addEventListener("mousedown", (e) => {
+      const m = getMousePos(e);
+      const hit = findNodeAt(m.worldX, m.worldY);
+      if (hit) {
+        draggedNode = hit;
+        selectedNode = hit;
+        updateDetails(hit);
+      } else {
+        isDragging = true;
+        dragStart = { x: m.screenX - panX, y: m.screenY - panY };
+      }
+    });
+
+    canvas.addEventListener("mousemove", (e) => {
+      const m = getMousePos(e);
+      if (draggedNode) {
+        draggedNode.x = m.worldX;
+        draggedNode.y = m.worldY;
+      } else if (isDragging) {
+        panX = m.screenX - dragStart.x;
+        panY = m.screenY - dragStart.y;
+      } else {
+        hoveredNode = findNodeAt(m.worldX, m.worldY);
+        canvas.style.cursor = hoveredNode ? "pointer" : "default";
+      }
+    });
+
+    window.addEventListener("mouseup", () => {
+      draggedNode = null;
+      isDragging = false;
+    });
+
+    canvas.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+      zoom = Math.max(0.2, Math.min(zoom * zoomFactor, 4.0));
+    });
+
+    function updateDetails(n) {
+      const card = document.getElementById("details-content");
+      card.innerHTML = `
+        <div class="details-title">${n.label}</div>
+        <div class="details-meta">Type: <strong>${n.type}</strong> | Package: <strong>${n.package || "root"}</strong></div>
+        ${n.file ? `<div class="details-meta" style="word-break:break-all;">File: ${n.file}</div>` : ""}
+        ${n.lines ? `<div class="details-meta">Lines: ${n.lines}</div>` : ""}
+        ${n.docstring ? `<div class="details-doc">${n.docstring}</div>` : ""}
+      `;
+    }
+
+    // Controls
+    document.getElementById("search").addEventListener("input", (e) => {
+      searchTerm = e.target.value.toLowerCase().trim();
+    });
+
+    document.getElementById("btn-modules").addEventListener("click", function() {
+      showModules = !showModules;
+      this.classList.toggle("active", showModules);
+    });
+
+    document.getElementById("btn-classes").addEventListener("click", function() {
+      showClasses = !showClasses;
+      this.classList.toggle("active", showClasses);
+    });
+
+    document.getElementById("btn-routes").addEventListener("click", function() {
+      showRoutes = !showRoutes;
+      this.classList.toggle("active", showRoutes);
+    });
+
+    document.getElementById("btn-reset").addEventListener("click", () => {
+      zoom = 1.0;
+      panX = 0;
+      panY = 0;
+    });
+  </script>
+</body>
+</html>
