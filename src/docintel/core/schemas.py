@@ -189,6 +189,8 @@ class JobStatusResponse(BaseModel):
     status: str
     progress_percent: float
     current_step: str | None = None
+    step_description: str | None = None
+    logs: list[dict[str, Any]] = Field(default_factory=list)
     error_message: str | None = None
     started_at: datetime | None = None
     completed_at: datetime | None = None

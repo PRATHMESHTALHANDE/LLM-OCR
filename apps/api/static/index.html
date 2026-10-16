@@ -508,6 +508,100 @@
       pointer-events: none;
     }
 
+    /* Agent Chain-of-Thought Live Reasoning Console */
+    .agent-thought-card {
+      background: var(--card-bg);
+      border-radius: 18px;
+      padding: 16px 20px;
+      box-shadow: var(--neu-card);
+      border: 1px solid rgba(255, 255, 255, 0.85);
+      margin-bottom: 18px;
+      transition: all 0.3s ease;
+    }
+
+    .thought-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .pulsing-brain {
+      font-size: 18px;
+      animation: pulse 1.4s infinite;
+      display: inline-block;
+    }
+
+    .badge-thought-status {
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 3px 9px;
+      border-radius: 12px;
+      background: #e0f2fe;
+      color: #0284c7;
+      box-shadow: inset 1px 1px 2px #bae6fd, inset -1px -1px 2px #ffffff;
+      transition: all 0.3s ease;
+    }
+
+    .thought-progress-bar-wrap {
+      width: 100%;
+      height: 7px;
+      background: var(--card-bg);
+      box-shadow: var(--neu-pressed);
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+
+    .thought-progress-bar {
+      height: 100%;
+      background: var(--accent-coral-grad);
+      border-radius: 6px;
+      transition: width 0.35s ease;
+      box-shadow: 0 0 10px rgba(255, 118, 68, 0.4);
+    }
+
+    .thought-feed {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 140px;
+      overflow-y: auto;
+      padding: 10px 14px;
+      background: #f8fafc;
+      border-radius: 14px;
+      box-shadow: var(--neu-pressed);
+      font-family: 'SF Mono', Monaco, Consolas, monospace;
+      font-size: 11.5px;
+      transition: all 0.25s ease;
+    }
+
+    .thought-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      line-height: 1.4;
+      animation: fadeIn 0.25s ease;
+    }
+
+    .thought-time {
+      color: #94a3b8;
+      font-weight: 600;
+      flex-shrink: 0;
+      font-size: 10.5px;
+    }
+
+    .thought-title {
+      color: #1e293b;
+      font-weight: 800;
+    }
+
+    .thought-detail {
+      color: #64748b;
+    }
+
     /* Results / Text Inspector */
     .results-card {
       background: var(--card-bg);
@@ -948,6 +1042,35 @@
           </div>
         </div>
 
+        <!-- Real-Time Agent Chain of Thought & Reasoning Console -->
+        <div class="agent-thought-card" id="agentThoughtCard" style="display: none;">
+          <div class="thought-header">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="pulsing-brain">🧠</span>
+              <span style="font-weight: 800; font-size: 13px; color: #1e293b;">Agent Live Chain-of-Thought</span>
+              <span class="badge-thought-status" id="thoughtStatusBadge">Thinking...</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span style="font-size: 11.5px; font-weight: 800; color: var(--accent-coral);" id="thoughtProgressPercent">0%</span>
+              <button class="neu-btn" id="btnToggleThoughts" style="padding: 3px 9px; font-size: 10px;" onclick="toggleThoughtFeed()">
+                Hide Thoughts ▲
+              </button>
+            </div>
+          </div>
+
+          <div class="thought-progress-bar-wrap">
+            <div class="thought-progress-bar" id="thoughtProgressBar" style="width: 0%;"></div>
+          </div>
+
+          <div class="thought-feed" id="thoughtFeed">
+            <div class="thought-item">
+              <span class="thought-time">--:--:--</span>
+              <span class="thought-title">Agent Initialized</span>
+              <span class="thought-detail">Waiting for document ingestion...</span>
+            </div>
+          </div>
+        </div>
+
         <div class="tabs-header">
           <div class="tab-item active" onclick="switchTab('elements')">Structured Elements</div>
           <div class="tab-item" onclick="switchTab('markdown')">Markdown Output</div>
@@ -1178,6 +1301,106 @@
       }
     });
 
+    let currentJobId = null;
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function toggleThoughtFeed() {
+      const feed = document.getElementById('thoughtFeed');
+      const btn = document.getElementById('btnToggleThoughts');
+      if (feed.style.display === 'none') {
+        feed.style.display = 'flex';
+        btn.textContent = 'Hide Thoughts ▲';
+      } else {
+        feed.style.display = 'none';
+        btn.textContent = 'Show Thoughts ▼';
+      }
+    }
+
+    function renderThoughts(thoughts) {
+      const feed = document.getElementById('thoughtFeed');
+      if (!feed || !thoughts || !thoughts.length) return;
+
+      const icons = {
+        init: '🚀',
+        inspect: '🔍',
+        routing: '🎯',
+        render: '🖼️',
+        enhance: '✍️',
+        ocr: '⚡',
+        extract: '📊',
+        artifacts: '💾',
+        complete: '✨',
+        error: '⚠️'
+      };
+
+      feed.innerHTML = thoughts.map(t => {
+        const icon = icons[t.step] || '🧠';
+        const color = t.level === 'error' ? '#ef4444' : (t.level === 'success' ? '#10b981' : '#1e293b');
+        return `
+          <div class="thought-item">
+            <span class="thought-time">[${t.timestamp || ''}]</span>
+            <span style="font-size: 13px;">${icon}</span>
+            <span class="thought-title" style="color: ${color};">${escapeHtml(t.title)}:</span>
+            <span class="thought-detail">${escapeHtml(t.detail || '')}</span>
+          </div>
+        `;
+      }).join('');
+
+      feed.scrollTop = feed.scrollHeight;
+    }
+
+    function triggerOcrProcess() {
+      if (fileInput.files && fileInput.files.length) {
+        handleFileUpload(fileInput.files[0]);
+      } else if (currentDocId) {
+        reprocessCurrentDocument();
+      } else {
+        fileInput.click();
+      }
+    }
+
+    async function reprocessCurrentDocument() {
+      if (!currentDocId) return;
+      const btnStart = document.getElementById('btnStartOcr');
+      btnStart.textContent = '⏳ Processing OCR...';
+      btnStart.style.opacity = '0.7';
+
+      // Reset thought console
+      const thoughtCard = document.getElementById('agentThoughtCard');
+      thoughtCard.style.display = 'block';
+      document.getElementById('thoughtProgressBar').style.width = '15%';
+      document.getElementById('thoughtProgressPercent').textContent = '15%';
+      document.getElementById('thoughtStatusBadge').textContent = 'Triggering...';
+      document.getElementById('thoughtStatusBadge').style.background = '#e0f2fe';
+      document.getElementById('thoughtStatusBadge').style.color = '#0284c7';
+
+      try {
+        const resp = await fetch(`/api/v1/documents/${currentDocId}/process?engine=${encodeURIComponent(selectedModel)}`, {
+          method: 'POST'
+        });
+        if (resp.ok) {
+          const data = await resp.json();
+          currentJobId = data.job_id;
+          await loadDocumentDetails(currentDocId);
+        } else {
+          alert('Failed to trigger OCR processing.');
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        btnStart.textContent = '🚀 Execute OCR & Extract Layout';
+        btnStart.style.opacity = '1';
+      }
+    }
+
     // Upload Handler
     async function handleFileUpload(file) {
       const formData = new FormData();
@@ -1186,6 +1409,26 @@
       const btnStart = document.getElementById('btnStartOcr');
       btnStart.textContent = '⏳ Uploading & Processing...';
       btnStart.style.opacity = '0.7';
+
+      // Open Agent Thought Card immediately
+      const thoughtCard = document.getElementById('agentThoughtCard');
+      thoughtCard.style.display = 'block';
+      document.getElementById('thoughtProgressBar').style.width = '15%';
+      document.getElementById('thoughtProgressPercent').textContent = '15%';
+      const badge = document.getElementById('thoughtStatusBadge');
+      badge.textContent = 'Uploading...';
+      badge.style.background = '#e0f2fe';
+      badge.style.color = '#0284c7';
+
+      renderThoughts([
+        {
+          timestamp: new Date().toTimeString().split(' ')[0],
+          step: 'init',
+          title: 'Document Upload Stream',
+          detail: `Streaming '${file.name}' (${(file.size / 1024).toFixed(1)} KB) to DocIntel backend with ${selectedModel.toUpperCase()} engine.`,
+          level: 'info'
+        }
+      ]);
 
       try {
         const resp = await fetch(`/api/v1/documents/upload?engine=${encodeURIComponent(selectedModel)}`, {
@@ -1203,6 +1446,7 @@
 
         const data = await resp.json();
         currentDocId = data.document_id;
+        currentJobId = data.job_id;
         currentPage = 1;
         elementPage = 1;
         expandedTextIds.clear();
@@ -1234,6 +1478,10 @@
         currentDocTotalPages = doc.page_count || 1;
         if (currentPage > currentDocTotalPages) currentPage = 1;
 
+        if (doc.latest_job_id) {
+          currentJobId = doc.latest_job_id;
+        }
+
         // Update active document banner
         document.getElementById('activeDocTitle').textContent = doc.filename;
         const badge = document.getElementById('activeDocBadge');
@@ -1254,27 +1502,73 @@
 
         updatePageNavigationUI();
 
-        // If document is pending or processing, poll status
+        // Render thoughts if returned on doc
+        if (doc.thoughts && doc.thoughts.length) {
+          const thoughtCard = document.getElementById('agentThoughtCard');
+          thoughtCard.style.display = 'block';
+          renderThoughts(doc.thoughts);
+        }
+
+        // If document is pending or processing, poll status and live job thoughts
         if (doc.status === 'pending' || doc.status === 'processing') {
           badge.className = 'badge-status badge-processing';
           badge.textContent = doc.status === 'processing' ? '⏳ Processing OCR...' : '⏳ In Queue...';
+
+          const thoughtCard = document.getElementById('agentThoughtCard');
+          thoughtCard.style.display = 'block';
+
+          // Poll job progress and reasoning logs
+          if (currentJobId) {
+            try {
+              const jobResp = await fetch(`/api/v1/jobs/${currentJobId}`);
+              if (jobResp.ok) {
+                const jobData = await jobResp.json();
+                const pct = Math.max(15, Math.round(jobData.progress_percent || 15));
+                document.getElementById('thoughtProgressBar').style.width = `${pct}%`;
+                document.getElementById('thoughtProgressPercent').textContent = `${pct}%`;
+                const stepName = jobData.step_description || (jobData.current_step ? jobData.current_step.replace(/_/g, ' ') : 'Thinking...');
+                document.getElementById('thoughtStatusBadge').textContent = stepName;
+                if (jobData.logs && jobData.logs.length) {
+                  renderThoughts(jobData.logs);
+                }
+              }
+            } catch (jobErr) {
+              console.debug('Job status polling error:', jobErr);
+            }
+          }
 
           document.getElementById('elementsContainer').innerHTML = `
             <div class="empty-state">
               <div style="font-size: 32px; margin-bottom: 12px; animation: pulse 1.2s infinite;">⚡</div>
               <h4 style="color: #1e293b; font-size: 15px; margin-bottom: 6px;">Extracting Document Layout & Content</h4>
-              <p style="font-size: 12px;">PyMuPDF / Florence-2 vision pipeline is analyzing blocks, coordinates, and text.<br>Auto-updating in seconds...</p>
+              <p style="font-size: 12px;">Vision & OCR neural pipeline is actively analyzing text and coordinates.<br>Follow the live Chain-of-Thought reasoning above...</p>
             </div>
           `;
           renderProcessingCanvas(doc.filename);
-          pollTimer = setTimeout(() => loadDocumentDetails(docId), 1000);
+          pollTimer = setTimeout(() => loadDocumentDetails(docId), 700);
           return;
         }
 
-        // If completed, fetch elements and artifacts
+        // If completed, finalize thought progress and fetch elements
         if (doc.status === 'completed') {
+          const thoughtCard = document.getElementById('agentThoughtCard');
+          thoughtCard.style.display = 'block';
+          document.getElementById('thoughtProgressBar').style.width = '100%';
+          document.getElementById('thoughtProgressPercent').textContent = '100%';
+          const statusBadge = document.getElementById('thoughtStatusBadge');
+          statusBadge.textContent = 'Completed';
+          statusBadge.style.background = '#dcfce7';
+          statusBadge.style.color = '#15803d';
+
           await loadDocumentElementsAndArtifacts(docId);
         } else if (doc.status === 'failed') {
+          const thoughtCard = document.getElementById('agentThoughtCard');
+          thoughtCard.style.display = 'block';
+          const statusBadge = document.getElementById('thoughtStatusBadge');
+          statusBadge.textContent = 'Failed';
+          statusBadge.style.background = '#fee2e2';
+          statusBadge.style.color = '#dc2626';
+
           document.getElementById('elementsContainer').innerHTML = `
             <div class="empty-state" style="color: #dc2626;">
               <div style="font-size: 32px; margin-bottom: 12px;">⚠️</div>

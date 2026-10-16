@@ -104,6 +104,8 @@ class IngestionService:
             status="queued",
         )
 
+        await self.session.commit()
+
         return IngestResponse(
             document_id=doc.id,
             job_id=job.id,
@@ -183,6 +185,8 @@ class IngestionService:
             job_type="pipeline",
             status="queued",
         )
+
+        await self.session.commit()
 
         return IngestResponse(
             document_id=doc.id,

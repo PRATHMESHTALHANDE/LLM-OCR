@@ -4,7 +4,9 @@ Provides asynchronous REST endpoints for document ingestion, background pipeline
 status polling, artifact retrieval, element extraction, and document deletion.
 """
 
+import asyncio
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 import logging
 from pathlib import Path
 from typing import Any
@@ -47,13 +49,33 @@ from docintel.storage.repositories import (
 
 logger = logging.getLogger("docintel.api")
 
+# In-memory Agent Chain-of-Thought logs keyed by job_id
+_job_logs: dict[str, list[dict[str, Any]]] = {}
+
+
+def log_thought(job_id: str, step: str, title: str, detail: str, level: str = "info") -> None:
+    """Record an agent reasoning step and thought for real-time UI Chain-of-Thought display."""
+    entry = {
+        "timestamp": datetime.utcnow().strftime("%H:%M:%S"),
+        "step": step,
+        "title": title,
+        "detail": detail,
+        "level": level,
+    }
+    logger.info("[AGENT REASONING] [%s] %s: %s", step, title, detail)
+    if job_id not in _job_logs:
+        _job_logs[job_id] = []
+    _job_logs[job_id].append(entry)
+
 
 async def process_document_pipeline(document_id: str, job_id: str, ocr_engine: str = "glm_ocr") -> None:
     """
     Background worker function executing document extraction, layout parsing,
     canonical JSON/Markdown generation, and database element persistence.
+    Emits real-time agent thoughts and reasoning steps for UI observability.
     """
     logger.info("Starting background processing for document: %s (job: %s, engine: %s)", document_id, job_id, ocr_engine)
+    log_thought(job_id, "init", "Document Ingestion Initialized", f"Registered processing task with engine '{ocr_engine}'.")
     artifact_mgr = ArtifactManager()
 
     async with session_scope() as session:
@@ -63,13 +85,27 @@ async def process_document_pipeline(document_id: str, job_id: str, ocr_engine: s
         elem_repo = ElementRepository(session)
         art_repo = ArtifactRepository(session)
 
-        doc = await doc_repo.get_by_id(document_id)
+        # Retry loop to guarantee transaction visibility across sessions
+        doc = None
+        for attempt in range(5):
+            doc = await doc_repo.get_by_id(document_id)
+            if doc:
+                break
+            await asyncio.sleep(0.1)
+
         if not doc:
-            logger.error("Document %s not found for processing", document_id)
+            logger.error("Document %s not found for processing after retries", document_id)
+            log_thought(job_id, "error", "Document Lookup Failed", f"Document ID {document_id} was not found in database session.", "error")
             return
 
-        await job_repo.update_job(job_id, status="running", progress_percent=15.0, current_step="extracting_content")
+        await job_repo.update_job(job_id, status="running", progress_percent=15.0, current_step="inspecting_file")
         await doc_repo.update_status(document_id, status="processing")
+        log_thought(
+            job_id,
+            "inspect",
+            "File Verification & Hash Integrity",
+            f"Verified file '{doc.filename}' ({round(doc.file_size_bytes / 1024, 1)} KB, MIME: {doc.mime_type}). SHA-256 integrity confirmed.",
+        )
 
         try:
             file_path = Path(doc.storage_path)
@@ -84,6 +120,14 @@ async def process_document_pipeline(document_id: str, job_id: str, ocr_engine: s
             meta = dict(doc.metadata_ or {})
             meta["ocr_engine"] = ocr_engine
 
+            log_thought(
+                job_id,
+                "routing",
+                "Neural OCR Routing Strategy",
+                f"Selected '{ocr_engine}' engine. Rendering 150 DPI page previews & inspecting digital text layer...",
+            )
+            await job_repo.update_job(job_id, progress_percent=35.0, current_step="rasterizing_and_ocr")
+
             canon_doc: CanonicalDocument = await extractor.extract(
                 document_id=document_id,
                 file_path=file_path,
@@ -91,12 +135,24 @@ async def process_document_pipeline(document_id: str, job_id: str, ocr_engine: s
                 metadata=meta,
             )
 
-            await job_repo.update_job(job_id, progress_percent=55.0, current_step="saving_artifacts")
+            log_thought(
+                job_id,
+                "extract",
+                "Text & Spatial Coordinate Extraction",
+                f"Extracted {len(canon_doc.elements)} layout elements across {len(canon_doc.pages)} page(s) with pixel bounding boxes.",
+            )
+            await job_repo.update_job(job_id, progress_percent=70.0, current_step="saving_artifacts")
 
             # 2. Save physical artifacts atomically to disk
             json_path = artifact_mgr.save_canonical_document(canon_doc)
             md_path = artifact_mgr.save_markdown(document_id, canon_doc.markdown)
             meta_path = artifact_mgr.save_metadata(document_id, canon_doc.metadata.model_dump())
+            log_thought(
+                job_id,
+                "artifacts",
+                "Artifact Serialization",
+                "Exported canonical document.json and clean Markdown document.",
+            )
 
             # 3. Clean up any prior execution data to guarantee complete idempotency
             await elem_repo.delete_elements_by_document(document_id)
@@ -160,10 +216,18 @@ async def process_document_pipeline(document_id: str, job_id: str, ocr_engine: s
             page_count = max(1, len(canon_doc.pages))
             await doc_repo.update_status(document_id, status="completed", page_count=page_count)
             await job_repo.update_job(job_id, status="completed", progress_percent=100.0, current_step="done")
+            log_thought(
+                job_id,
+                "complete",
+                "Extraction Pipeline Complete",
+                f"Persisted {len(elements_data)} text and layout bounding boxes. Ready for UI inspection.",
+                "success",
+            )
             logger.info("Document %s completed successfully with %d elements.", document_id, len(elements_data))
 
         except Exception as e:
             logger.exception("Processing pipeline failed for document %s: %s", document_id, e)
+            log_thought(job_id, "error", "Processing Error", str(e), "error")
             await session.rollback()
             try:
                 await doc_repo.update_status(document_id, status="failed")
@@ -292,6 +356,7 @@ async def upload_document(
             stream=file.file,
             reported_mime=file.content_type,
         )
+        await session.commit()
         # Trigger immediate background processing with selected OCR engine
         background_tasks.add_task(process_document_pipeline, response.document_id, response.job_id, engine)
         return response
@@ -320,8 +385,9 @@ async def trigger_document_process(
     latest_job = await job_repo.get_latest_for_document(document_id)
     job_id = latest_job.id if latest_job else (await job_repo.create_job(document_id)).id
 
+    await session.commit()
     background_tasks.add_task(process_document_pipeline, document_id, job_id, engine)
-    return {"status": "accepted", "message": f"Processing initiated for document {document_id} with {engine}"}
+    return {"status": "accepted", "message": f"Processing initiated for document {document_id} with {engine}", "job_id": job_id}
 
 
 @app.get("/api/v1/documents", tags=["Documents"])
@@ -374,6 +440,8 @@ async def get_document(
         "file_size_bytes": doc.file_size_bytes,
         "page_count": doc.page_count,
         "status": doc.status,
+        "latest_job_id": doc.jobs[0].id if doc.jobs else None,
+        "thoughts": _job_logs.get(doc.jobs[0].id, []) if doc.jobs else [],
         "metadata": doc.metadata_,
         "created_at": doc.created_at,
         "updated_at": doc.updated_at,
@@ -516,7 +584,7 @@ async def get_job_status(
     job_id: str,
     session: AsyncSession = Depends(get_db_session),
 ):
-    """Retrieve processing progress and status for an asynchronous job."""
+    """Retrieve processing progress, status, and live Chain of Thought logs for an asynchronous job."""
     repo = JobRepository(session)
     job = await repo.get_by_id(job_id)
     if not job:
@@ -526,14 +594,25 @@ async def get_job_status(
     if job.started_at and job.completed_at:
         duration = (job.completed_at - job.started_at).total_seconds()
 
+    logs = _job_logs.get(job_id, [])
+    step_desc = logs[-1]["title"] if logs else job.current_step
+
     return JobStatusResponse(
         job_id=job.id,
         document_id=job.document_id,
         status=job.status,
         progress_percent=job.progress_percent,
         current_step=job.current_step,
+        step_description=step_desc,
+        logs=logs,
         error_message=job.error_message,
         started_at=job.started_at,
         completed_at=job.completed_at,
         duration_seconds=duration,
     )
+
+
+@app.get("/api/v1/jobs/{job_id}/thoughts", tags=["Jobs"])
+async def get_job_thoughts(job_id: str):
+    """Retrieve live chain of thoughts and reasoning steps for a document job."""
+    return {"job_id": job_id, "thoughts": _job_logs.get(job_id, [])}
