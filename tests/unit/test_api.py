@@ -134,3 +134,30 @@ async def test_document_upload_and_status_flow():
         # Verify document is gone
         check_resp = await client.get(f"/api/v1/documents/{doc_id}")
         assert check_resp.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_interactive_samples_endpoint():
+    """Verify pre-computed demo samples return valid canonical structures."""
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        # 1. Research paper sample
+        resp = await client.get("/api/v1/samples/research-paper")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["document_id"] == "sample-research-paper"
+        assert len(data["elements"]) > 0
+        assert len(data["thoughts"]) > 0
+        assert "markdown" in data
+
+        # 2. Handwriting sample
+        resp_hw = await client.get("/api/v1/samples/handwriting")
+        assert resp_hw.status_code == 200
+        data_hw = resp_hw.json()
+        assert data_hw["document_id"] == "sample-handwriting"
+        assert len(data_hw["elements"]) == 6
+        assert len(data_hw["thoughts"]) > 0
+
+        # 3. Nonexistent sample returns 404
+        resp_404 = await client.get("/api/v1/samples/non-existent")
+        assert resp_404.status_code == 404

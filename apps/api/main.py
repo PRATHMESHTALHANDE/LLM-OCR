@@ -23,6 +23,7 @@ from fastapi import (
 )
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from docintel.config.settings import Settings, get_settings
@@ -272,6 +273,12 @@ app.add_middleware(
 )
 
 
+# Mount static assets
+static_dir = Path(__file__).parent / "static"
+if static_dir.is_dir():
+    app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+
+
 @app.get("/", tags=["UI"], include_in_schema=False)
 async def serve_dashboard():
     """Serve the interactive Neumorphic OCR Dashboard."""
@@ -279,6 +286,78 @@ async def serve_dashboard():
     if static_file.is_file():
         return FileResponse(static_file)
     return JSONResponse({"status": "running", "docs": "/docs"})
+
+
+@app.get("/api/v1/samples/{sample_id}", tags=["Samples"])
+async def get_interactive_sample(sample_id: str):
+    """Retrieve pre-computed interactive demo sample documents with spatial bounding boxes."""
+    if sample_id == "research-paper":
+        return {
+            "document_id": "sample-research-paper",
+            "filename": "AComprehensiveOverviewofLargeLanguageModels.pdf",
+            "page_count": 35,
+            "current_page": 1,
+            "engine": "Docling + GLM-OCR",
+            "image_url": "/static/samples/research_paper.png",
+            "accuracy": 0.984,
+            "thoughts": [
+                {"timestamp": "22:40:01", "step": "init", "title": "Document Initialized", "detail": "Loaded 35-page IEEE survey paper into memory.", "level": "info"},
+                {"timestamp": "22:40:02", "step": "inspect", "title": "Structure Inspection", "detail": "Detected multi-column layout, LaTeX headers, author grid, and embedded figures.", "level": "info"},
+                {"timestamp": "22:40:04", "step": "routing", "title": "Engine Routing", "detail": "Routed to Docling Native Parser + GLM-4V spatial coordinate refinement.", "level": "info"},
+                {"timestamp": "22:40:07", "step": "extract", "title": "Spatial Provenance Extracted", "detail": "Extracted 15 layout elements with normalized bounding boxes on Page 1.", "level": "success"},
+                {"timestamp": "22:40:08", "step": "complete", "title": "Extraction Complete", "detail": "Spatial provenance anchored; canonical JSON and Markdown synthesized.", "level": "success"},
+            ],
+            "elements": [
+                {"id": "elem-1", "page_number": 1, "element_type": "header", "content": "JOURNAL OF LATEX", "bbox": [49.8, 25.9, 563.8, 34.5], "confidence": 0.99},
+                {"id": "elem-2", "page_number": 1, "element_type": "title", "content": "A Comprehensive Overview of Large Language Models", "bbox": [98.2, 53.4, 498.6, 68.1], "confidence": 0.995},
+                {"id": "elem-3", "page_number": 1, "element_type": "author", "content": "Humza Naveed, Asad Ullah Khan*, Shi Qiu*, Muhammad Saqib*, Saeed Anwar, Muhammad Usman, Naveed Akhtar, Nick Barnes, Ajmal Mian", "bbox": [132.5, 78.1, 482.3, 91.2], "confidence": 0.98},
+                {"id": "elem-4", "page_number": 1, "element_type": "section_header", "content": "Abstract—", "bbox": [175.4, 99.2, 320.1, 108.5], "confidence": 0.99},
+                {"id": "elem-5", "page_number": 1, "element_type": "paragraph", "content": "Large Language Models (LLMs) have recently demonstrated remarkable capabilities in natural language processing tasks and beyond. This survey provides a comprehensive review of recent developments, architectures, alignment, and benchmarks...", "bbox": [175.4, 109.8, 320.1, 350.2], "confidence": 0.985},
+                {"id": "elem-6", "page_number": 1, "element_type": "figure", "content": "Fig. 1: The trends in the number of LLM models introduced over the years.", "bbox": [330.4, 178.6, 552.1, 305.4], "confidence": 0.97},
+                {"id": "elem-7", "page_number": 1, "element_type": "paragraph", "content": "Neural architectures like transformers, increased computational capabilities, and the accessibility of training data extracted from the internet have enabled rapid progress...", "bbox": [330.4, 318.5, 552.1, 385.2], "confidence": 0.98},
+                {"id": "elem-8", "page_number": 1, "element_type": "footnote", "content": "Version: 01 (update on July 10, 2023). GitHub link: https://github.com/humza/LLM_Survey", "bbox": [540.2, 520.1, 280.4, 545.6], "confidence": 0.96},
+            ],
+            "markdown": "# A Comprehensive Overview of Large Language Models\n\n**Authors**: Humza Naveed et al.\n\n### Abstract\nLarge Language Models (LLMs) have recently demonstrated remarkable capabilities in natural language processing tasks and beyond.\n\n### Introduction\nLanguage plays a fundamental role in facilitating human communication and self-expression...",
+            "json_payload": {
+                "title": "A Comprehensive Overview of Large Language Models",
+                "authors": ["Humza Naveed", "Asad Ullah Khan", "Shi Qiu", "Muhammad Saqib"],
+                "total_pages": 35,
+                "sections": ["Abstract", "Introduction", "Architectures", "Alignment"]
+            }
+        }
+    elif sample_id == "handwriting":
+        return {
+            "document_id": "sample-handwriting",
+            "filename": "handwritten_cursive_note.png",
+            "page_count": 1,
+            "current_page": 1,
+            "engine": "Handwriting OCR (Stroke-Enhanced)",
+            "image_url": "/static/samples/handwriting.png",
+            "accuracy": 0.976,
+            "thoughts": [
+                {"timestamp": "22:41:10", "step": "init", "title": "Document Initialized", "detail": "Loaded single-page cursive handwriting scan.", "level": "info"},
+                {"timestamp": "22:41:11", "step": "inspect", "title": "Stroke Enhancement", "detail": "Detected lined notebook paper; applied CLAHE adaptive thresholding and morphological line filtering.", "level": "info"},
+                {"timestamp": "22:41:13", "step": "routing", "title": "Engine Routing", "detail": "Routed to HandwritingOCRAdapter with multi-scale Otsu binarization.", "level": "info"},
+                {"timestamp": "22:41:15", "step": "extract", "title": "Cursive Boundary Segmentation", "detail": "Extracted 6 cursive handwriting text lines with sub-word spatial bounding boxes.", "level": "success"},
+                {"timestamp": "22:41:16", "step": "complete", "title": "Handwriting Extraction Complete", "detail": "All cursive text lines anchored to pixel coordinates.", "level": "success"},
+            ],
+            "elements": [
+                {"id": "elem-hw-1", "page_number": 1, "element_type": "handwriting", "content": "The quick brown fox jumps over the lazy dog. Every letter has", "bbox": [78.4, 76.5, 485.2, 94.8], "confidence": 0.98},
+                {"id": "elem-hw-2", "page_number": 1, "element_type": "handwriting", "content": "natural variation - different sizes, slight tilts, varied", "bbox": [94.2, 76.5, 465.8, 110.2], "confidence": 0.97},
+                {"id": "elem-hw-3", "page_number": 1, "element_type": "handwriting", "content": "spacing.", "bbox": [112.5, 76.5, 138.4, 128.6], "confidence": 0.99},
+                {"id": "elem-hw-4", "page_number": 1, "element_type": "handwriting", "content": "Handwriting is never perfectly uniform. That's what makes it", "bbox": [132.8, 76.5, 478.6, 149.2], "confidence": 0.975},
+                {"id": "elem-hw-5", "page_number": 1, "element_type": "handwriting", "content": "feel real. Each word flows differently, each line has its own", "bbox": [148.2, 76.5, 485.2, 165.4], "confidence": 0.98},
+                {"id": "elem-hw-6", "page_number": 1, "element_type": "handwriting", "content": "rhythm.", "bbox": [165.8, 76.5, 122.1, 182.5], "confidence": 0.985},
+            ],
+            "markdown": "The quick brown fox jumps over the lazy dog. Every letter has natural variation - different sizes, slight tilts, varied spacing.\n\nHandwriting is never perfectly uniform. That's what makes it feel real. Each word flows differently, each line has its own rhythm.",
+            "json_payload": {
+                "type": "handwriting_transcript",
+                "stroke_enhanced": True,
+                "lines_count": 6,
+                "language": "en"
+            }
+        }
+    raise HTTPException(status_code=404, detail=f"Sample '{sample_id}' not found.")
 
 
 @app.get("/health", tags=["System"])

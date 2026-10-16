@@ -975,11 +975,11 @@
 
           <!-- Quick Presets -->
           <div style="margin-top: 16px;">
-            <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Quick Test Samples:</label>
+            <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Interactive Demo Samples:</label>
             <div class="presets-row">
-              <button class="preset-chip" onclick="loadSampleInvoice()">Receipt / Invoice</button>
-              <button class="preset-chip" onclick="loadSampleContract()">Legal Contract</button>
-              <button class="preset-chip" onclick="loadSampleResearch()">Research Paper</button>
+              <button class="preset-chip" style="font-weight: 800; color: #1e293b;" onclick="loadInteractiveSample('research-paper')">📄 Research Paper (Dense)</button>
+              <button class="preset-chip" style="font-weight: 800; color: #1e293b;" onclick="loadInteractiveSample('handwriting')">✍️ Handwritten Note</button>
+              <button class="preset-chip" onclick="loadSampleInvoice()">🧾 Receipt / Invoice</button>
             </div>
           </div>
         </div>
@@ -1688,12 +1688,12 @@
       });
 
       pageElements.forEach(elem => {
-        const b = elem.bbox;
+        const b = getBboxCoords(elem);
         if (!b) return;
 
         // Scale factors: PDF point coordinate space (typically ~595 x 842 pt) -> Canvas pixels (e.g. 1240 x 1754 px)
-        const pageWidth = elem.page_width || (currentImage ? 595.32 : canvas.width);
-        const pageHeight = elem.page_height || (currentImage ? 841.92 : canvas.height);
+        const pageWidth = elem.page_width || (currentImage ? currentImage.naturalWidth || 595.32 : canvas.width);
+        const pageHeight = elem.page_height || (currentImage ? currentImage.naturalHeight || 841.92 : canvas.height);
         const scaleX = canvas.width / pageWidth;
         const scaleY = canvas.height / pageHeight;
 
@@ -2163,6 +2163,104 @@
       }
     }
 
+    // Bounding Box Helper (supports both object and array formats)
+    function getBboxCoords(elem) {
+      if (!elem || !elem.bbox) return null;
+      const b = elem.bbox;
+      if (Array.isArray(b)) {
+        return { x0: b[1], y0: b[0], x1: b[3], y1: b[2] };
+      }
+      return { x0: b.x0 ?? 0, y0: b.y0 ?? 0, x1: b.x1 ?? 0, y1: b.y1 ?? 0 };
+    }
+
+    // Interactive Demo Sample Loader
+    async function loadInteractiveSample(sampleId) {
+      try {
+        const resp = await fetch(`/api/v1/samples/${sampleId}`);
+        if (!resp.ok) {
+          console.error("Failed to load sample:", sampleId);
+          return;
+        }
+        const sample = await resp.json();
+        
+        currentDocId = sample.document_id;
+        currentDocTotalPages = sample.page_count;
+        currentPage = sample.current_page || 1;
+        
+        document.getElementById('activeDocTitle').textContent = sample.filename;
+        const badge = document.getElementById('activeDocBadge');
+        badge.className = 'badge-status badge-completed';
+        badge.textContent = '● completed';
+        document.getElementById('activeDocMeta').textContent = `Interactive Demo · ${sample.page_count} Pages · Engine: ${sample.engine} · Accuracy: ${(sample.accuracy * 100).toFixed(1)}%`;
+        
+        // Show Agent Live Chain-of-Thought
+        const thoughtCard = document.getElementById('agentThoughtCard');
+        if (thoughtCard && sample.thoughts) {
+          thoughtCard.style.display = 'block';
+          document.getElementById('thoughtProgressBar').style.width = '100%';
+          document.getElementById('thoughtPercent').textContent = '100%';
+          const badgeEl = document.getElementById('thoughtStatusBadge');
+          badgeEl.textContent = 'COMPLETED';
+          badgeEl.className = 'badge-thought-status';
+          badgeEl.style.background = '#dcfce7';
+          badgeEl.style.color = '#15803d';
+          renderThoughts(sample.thoughts);
+        }
+
+        // Map elements
+        detectedElements = sample.elements.map((el, idx) => {
+          let b = el.bbox;
+          let bboxObj = { x0: 0, y0: 0, x1: 100, y1: 100 };
+          if (Array.isArray(b)) {
+            bboxObj = { x0: b[1], y0: b[0], x1: b[3], y1: b[2] };
+          } else if (b && typeof b === 'object') {
+            bboxObj = b;
+          }
+          return {
+            id: el.id || `sample-el-${idx}`,
+            element_type: el.element_type || 'paragraph',
+            page_number: el.page_number || 1,
+            page_width: sample.page_width || 675,
+            page_height: sample.page_height || 887,
+            text: el.content || el.text || '',
+            confidence: el.confidence || 0.98,
+            bbox: bboxObj,
+            reading_order: idx
+          };
+        });
+
+        // Load preview image onto canvas
+        if (sample.image_url) {
+          const img = new Image();
+          img.crossOrigin = "anonymous";
+          img.onload = () => {
+            currentImage = img;
+            canvas.width = img.naturalWidth || 675;
+            canvas.height = img.naturalHeight || 887;
+            detectedElements.forEach(el => {
+              el.page_width = canvas.width;
+              el.page_height = canvas.height;
+            });
+            redrawCanvas();
+            updatePageNavigationUI();
+            updateElementsView();
+          };
+          img.src = sample.image_url;
+        } else {
+          redrawCanvas();
+          updatePageNavigationUI();
+          updateElementsView();
+        }
+
+        // Update Markdown and JSON previews
+        document.getElementById('markdownPreview').textContent = sample.markdown || '';
+        document.getElementById('jsonPreview').textContent = JSON.stringify(sample.json_payload || sample, null, 2);
+
+      } catch (err) {
+        console.error("Error loading sample:", err);
+      }
+    }
+
     // Sample Presets (for initial showcase)
     function loadSampleInvoice() {
       document.getElementById('activeDocTitle').textContent = 'Commercial Invoice #INV-2026-904';
@@ -2177,10 +2275,7 @@
       generateMockElementsForDemo('Non-Disclosure Agreement (NDA)');
     }
     function loadSampleResearch() {
-      document.getElementById('activeDocTitle').textContent = 'Deep Learning for Vision Document Parsing';
-      document.getElementById('activeDocMeta').textContent = 'Research Paper Sample · 1 Page · Built-in Preset';
-      renderDocumentPreview('Deep Learning for Vision Document Parsing');
-      generateMockElementsForDemo('Deep Learning for Vision Document Parsing');
+      loadInteractiveSample('research-paper');
     }
 
     function renderDocumentPreview(title) {
@@ -2309,16 +2404,17 @@
       let matchedId = null;
       for (let i = pageElements.length - 1; i >= 0; i--) {
         const elem = pageElements[i];
-        if (!elem.bbox) continue;
-        const pageWidth = elem.page_width || (currentImage ? 595.32 : canvas.width);
-        const pageHeight = elem.page_height || (currentImage ? 841.92 : canvas.height);
+        const b = getBboxCoords(elem);
+        if (!b) continue;
+        const pageWidth = elem.page_width || (currentImage ? currentImage.naturalWidth || 595.32 : canvas.width);
+        const pageHeight = elem.page_height || (currentImage ? currentImage.naturalHeight || 841.92 : canvas.height);
         const scaleX = canvas.width / pageWidth;
         const scaleY = canvas.height / pageHeight;
 
-        const x = elem.bbox.x0 * scaleX;
-        const y = elem.bbox.y0 * scaleY;
-        const w = (elem.bbox.x1 - elem.bbox.x0) * scaleX;
-        const h = (elem.bbox.y1 - elem.bbox.y0) * scaleY;
+        const x = b.x0 * scaleX;
+        const y = b.y0 * scaleY;
+        const w = (b.x1 - b.x0) * scaleX;
+        const h = (b.y1 - b.y0) * scaleY;
 
         if (mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h) {
           matchedId = elem.id;
@@ -2356,7 +2452,7 @@
         if (firstInspectBtn) {
           firstInspectBtn.click();
         } else {
-          loadSampleInvoice();
+          loadInteractiveSample('research-paper');
         }
       });
       fetchSystemHealth();

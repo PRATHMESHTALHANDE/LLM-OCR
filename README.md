@@ -7,7 +7,42 @@
 [![React](https://img.shields.io/badge/React-18-61dafb.svg)](https://react.dev)
 [![Local First](https://img.shields.io/badge/Privacy-100%25_Local_First-success.svg)](#privacy-guarantee)
 
-> **A local-first, open-source document intelligence platform** that ingests multi-format documents (PDFs, scans, office files, emails), applies intelligent routing between native parsing and vision-language OCR, preserves pixel-perfect spatial provenance, persists to PostgreSQL with SQLAlchemy 2.0 ORM and Alembic migrations, evaluates extraction quality using publication-grade Seaborn charts, and provides an accessible Neumorphic React UI.
+> **A local-first, open-source document intelligence platform** that ingests multi-format documents (PDFs, scans, office files, emails), applies intelligent routing between native parsing and vision-language OCR, preserves pixel-perfect spatial provenance, persists to PostgreSQL/SQLite with SQLAlchemy 2.0 ORM and Alembic migrations, streams real-time Agent Chain-of-Thought reasoning, and provides an accessible Neumorphic Dashboard.
+
+---
+
+## 📸 Platform Showcase
+
+<div align="center">
+  <img src="docs/assets/dashboard_preview.png" alt="Open Doc Intelligence Neumorphic Dashboard with Live Chain-of-Thought" width="950" style="border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.12);" />
+  <p><em>Open Doc Intelligence Dashboard: Real-time hardware telemetry, live Agent Chain-of-Thought, spatial provenance canvas, and structured layout inspection.</em></p>
+</div>
+
+---
+
+## 🎯 Visual Provenance & Extraction Accuracy
+
+Open Doc Intelligence extracts text, tables, figures, and handwritten cursive with exact spatial bounding boxes $[y_1, x_1, y_2, x_2]$, normalized coordinates, reading-order graphs, and structured hierarchy:
+
+| 📄 Multi-Column Dense Academic Papers | ✍️ Complex Cursive Handwriting |
+| :---: | :---: |
+| <img src="docs/assets/dense_document_ocr.png" alt="Dense Academic Research Paper OCR" width="460" style="border-radius: 12px;" /> | <img src="docs/assets/handwriting_ocr.png" alt="Cursive Handwriting OCR with Bounding Boxes" width="460" style="border-radius: 12px;" /> |
+| **IEEE Survey Multi-Column Layout** | **Irregular Lined Notebook Cursive** |
+| • Preserves LaTeX title, author grid, and footnotes<br>• Identifies Fig. 1 trends bar chart & captions<br>• Accurate column flow segmentation | • CLAHE adaptive contrast binarization<br>• Morphological notebook line removal<br>• Word and line-level bounding box anchoring |
+
+---
+
+## 🧠 Real-Time Agent "Chain-of-Thought" Observability
+
+During intensive vision-language and OCR operations, users often abandon interfaces when faced with static loading spinners. Open Doc Intelligence streams the model and agent's cognitive pipeline directly to the UI in real-time:
+
+* 🟣 **Pending**: Registers document ingestion and allocates SQLite/PostgreSQL job checkpoints.
+* 🔵 **Inspecting**: Computes streaming SHA-256 integrity hash, magic byte mime sniffing, and checks deduplication index.
+* 🟠 **Routing**: Analyzes layout density and dynamically selects between Docling, GLM-OCR, or the Handwriting Engine.
+* 🟡 **Rendering**: Rasterizes vector PDF pages into 150 DPI RGB canvases for spatial coordinate normalization.
+* 🟢 **Extracting**: Emits token-by-token coordinate bounding boxes, hierarchy tags, and confidence scores.
+* 🟣 **Generating Artifacts**: Synthesizes canonical JSON schema and GitHub-flavored Markdown.
+* 🟢 **Completed**: Finalizes persistence and updates real-time KPI accuracy gauges.
 
 ---
 
@@ -109,8 +144,10 @@ Whenever code is created, modified, or refactored, this section is immediately u
 | **Document Extractors** | [`src/docintel/extractors/docling_adapter.py`](file:///c:/Users/roari/Downloads/AI%20Projects/LLM%20OCR/src/docintel/extractors/docling_adapter.py), [`text_extractor.py`](file:///c:/Users/roari/Downloads/AI%20Projects/LLM%20OCR/src/docintel/extractors/text_extractor.py) | ✅ Verified | IBM Docling layout parsing, Markdown/Text/CSV extractors | [Agent.md §7.2](file:///c:/Users/roari/Downloads/AI%20Projects/LLM%20OCR/Agent.md) |
 | **Baseline OCR** | [`src/docintel/ocr/paddle_adapter.py`](file:///c:/Users/roari/Downloads/AI%20Projects/LLM%20OCR/src/docintel/ocr/paddle_adapter.py), [`preprocessing.py`](file:///c:/Users/roari/Downloads/AI%20Projects/LLM%20OCR/src/docintel/ocr/preprocessing.py) | ✅ Verified | PaddleOCR PP-OCRv4 CPU inference, DPI normalization, scan detection | [Agent.md §8.1](file:///c:/Users/roari/Downloads/AI%20Projects/LLM%20OCR/Agent.md) |
 | **Advanced OCR (VLM)** | [`src/docintel/ocr/florence_adapter.py`](file:///c:/Users/roari/Downloads/AI%20Projects/LLM%20OCR/src/docintel/ocr/florence_adapter.py) | ✅ Verified | Microsoft Florence-2 (`<OCR_WITH_REGION>`), <=4GB VRAM in FP16 | [Agent.md §8.2](file:///c:/Users/roari/Downloads/AI%20Projects/LLM%20OCR/Agent.md) |
-| **FastAPI Backend** | [`apps/api/main.py`](file:///c:/Users/roari/Downloads/AI%20Projects/LLM%20OCR/apps/api/main.py) | ✅ Verified | FastAPI async routers, OpenAPI specs, background worker pipeline, deletion | [Agent.md §14](file:///c:/Users/roari/Downloads/AI%20Projects/LLM%20OCR/Agent.md) |
-| **Neumorphic UI** | [`apps/api/static/index.html`](file:///c:/Users/roari/Downloads/AI%20Projects/LLM%20OCR/apps/api/static/index.html) | ✅ Verified | Scaled bounding box alignment, multi-page document pagination & jumper, paginated element cards, collapsible text wells, live delete | [Agent.md §15](file:///c:/Users/roari/Downloads/AI%20Projects/LLM%20OCR/Agent.md) |
+| **GLM-OCR VLM** | [`src/docintel/ocr/glm_adapter.py`](file:///c:/Users/roari/Downloads/AI%20Projects/LLM%20OCR/src/docintel/ocr/glm_adapter.py) | ✅ Verified | GLM-4V spatial coordinate parser, multi-scale layout grounding | [Agent.md §8.3](file:///c:/Users/roari/Downloads/AI%20Projects/LLM%20OCR/Agent.md) |
+| **Handwriting OCR** | [`src/docintel/ocr/handwriting_adapter.py`](file:///c:/Users/roari/Downloads/AI%20Projects/LLM%20OCR/src/docintel/ocr/handwriting_adapter.py) | ✅ Verified | CLAHE adaptive contrast, stroke enhancement, cursive line segmentation | [Agent.md §8.4](file:///c:/Users/roari/Downloads/AI%20Projects/LLM%20OCR/Agent.md) |
+| **FastAPI Backend** | [`apps/api/main.py`](file:///c:/Users/roari/Downloads/AI%20Projects/LLM%20OCR/apps/api/main.py) | ✅ Verified | FastAPI async routers, OpenAPI specs, Live Chain-of-Thought stream, samples | [Agent.md §14](file:///c:/Users/roari/Downloads/AI%20Projects/LLM%20OCR/Agent.md) |
+| **Neumorphic UI** | [`apps/api/static/index.html`](file:///c:/Users/roari/Downloads/AI%20Projects/LLM%20OCR/apps/api/static/index.html) | ✅ Verified | Scaled bounding box alignment, multi-page pagination, interactive demo chips | [Agent.md §15](file:///c:/Users/roari/Downloads/AI%20Projects/LLM%20OCR/Agent.md) |
 | **Workflow Engine** | `src/docintel/workflows/graph.py`, `nodes.py` | ⏳ Next | LangGraph StateGraph, conditional edges, atomic checkpoints | [Agent.md §9](file:///c:/Users/roari/Downloads/AI%20Projects/LLM%20OCR/Agent.md) |
 | **Evaluation Engine** | `src/docintel/evaluation/charts.py`, `metrics_text.py` | ⏳ Next | `jiwer` CER/WER, Seaborn boxplots, field F1 bar plots | [Agent.md §11](file:///c:/Users/roari/Downloads/AI%20Projects/LLM%20OCR/Agent.md) |
 | **Codebase Visualizer** | `scripts/visualize_codebase.py` | ⏳ Next | Graphify (`graphifyy`), Tree-sitter AST, Mermaid diagrams | [Agent.md §21](file:///c:/Users/roari/Downloads/AI%20Projects/LLM%20OCR/Agent.md) |
@@ -153,6 +190,9 @@ python scripts/start.py
 * **Interactive API Docs (Swagger UI)**: [`http://127.0.0.1:8080/docs`](http://127.0.0.1:8080/docs)
 * **Alternative API Docs (ReDoc)**: [`http://127.0.0.1:8080/redoc`](http://127.0.0.1:8080/redoc)
 * **Health Check**: [`http://127.0.0.1:8080/health`](http://127.0.0.1:8080/health)
+
+> **💡 Try 1-Click Interactive Demos Immediately**:  
+> Once the dashboard is open, click **"📄 Research Paper (Dense)"** or **"✍️ Handwritten Note"** under *Interactive Demo Samples* to instantly explore high-accuracy bounding boxes, coordinate wells, live JSON/Markdown artifacts, and the real-time Agent Live Chain-of-Thought with zero setup or file uploads required!
 
 ---
 
