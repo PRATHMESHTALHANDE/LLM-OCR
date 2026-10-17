@@ -9,28 +9,34 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
+      /* Neumorphic Palette matched directly to reference image */
       --bg: #ebf1f8;
       --card-bg: #ebf1f8;
-      --text-main: #2d3748;
-      --text-muted: #718096;
-      --text-light: #a0aec0;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --text-light: #94a3b8;
       
-      /* Neumorphic Shadows */
-      --neu-flat: 8px 8px 16px #cbd4e1, -8px -8px 16px #ffffff;
-      --neu-flat-sm: 4px 4px 8px #cbd4e1, -4px -4px 8px #ffffff;
-      --neu-pressed: inset 4px 4px 8px #cbd4e1, inset -4px -4px 8px #ffffff;
-      --neu-hover: 12px 12px 24px #cbd4e1, -12px -12px 24px #ffffff;
-      --neu-card: 10px 10px 20px #cdd6e4, -10px -10px 20px #ffffff;
+      /* Neumorphic Physics & Diffused Dual Shadows */
+      --neu-flat: 8px 8px 18px rgba(166, 180, 200, 0.45), -8px -8px 18px rgba(255, 255, 255, 0.95);
+      --neu-flat-sm: 4px 4px 10px rgba(166, 180, 200, 0.38), -4px -4px 10px rgba(255, 255, 255, 0.95);
+      --neu-pressed: inset 3px 3px 6px rgba(166, 180, 200, 0.42), inset -3px -3px 6px rgba(255, 255, 255, 0.95);
+      --neu-hover: 10px 10px 22px rgba(166, 180, 200, 0.48), -10px -10px 22px rgba(255, 255, 255, 0.98);
+      --neu-card: 8px 8px 18px rgba(166, 180, 200, 0.42), -8px -8px 18px rgba(255, 255, 255, 0.95);
 
-      /* Accents from Reference Dashboard */
-      --accent-coral: #ff7644;
-      --accent-coral-grad: linear-gradient(135deg, #ff7a45, #ff5252);
-      --accent-teal: #00c9b7;
-      --accent-teal-grad: linear-gradient(135deg, #00c9b7, #02aab0);
+      /* Electric Indigo / Royal Violet Accents (from reference orb & accuracy dial) */
+      --accent-violet: #6366f1;
+      --accent-violet-dark: #4f46e5;
+      --accent-violet-grad: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      --accent-purple: #7c3aed;
+      --accent-purple-glow: 0 4px 14px rgba(99, 102, 241, 0.38);
+      --accent-soft-violet: rgba(99, 102, 241, 0.12);
+      
+      --accent-coral: #6366f1;
+      --accent-coral-grad: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      --accent-teal: #06b6d4;
       --accent-blue: #3b82f6;
-      --accent-purple: #8b5cf6;
-      --accent-pink: #ec4899;
       --accent-green: #10b981;
+      --accent-orange: #f59e0b;
     }
 
     * {
@@ -44,9 +50,10 @@
       background-color: var(--bg);
       color: var(--text-main);
       height: 100vh;
+      width: 100vw;
       overflow: hidden;
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
     }
 
     /* Scrollbars */
@@ -62,87 +69,141 @@
       border-radius: 4px;
     }
 
-    /* Unified One-Page Container */
-    .container {
-      max-width: 1680px;
-      margin: 0 auto;
-      padding: 10px 18px;
-      width: 100%;
+    /* Left Micro-Dock (Directly from Reference Image) */
+    .left-dock {
+      width: 56px;
       height: 100vh;
+      background: var(--card-bg);
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      box-sizing: border-box;
-      min-height: 0;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 0;
+      border-right: 1px solid rgba(255, 255, 255, 0.7);
+      box-shadow: 4px 0 16px rgba(166, 180, 200, 0.25);
+      flex-shrink: 0;
+      z-index: 10;
     }
 
-    /* Header */
-    header {
+    .dock-orb {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.45);
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+    .dock-orb:hover {
+      transform: scale(1.08);
+    }
+
+    .dock-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .dock-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      background: var(--card-bg);
+      box-shadow: var(--neu-flat-sm);
+      border: 1px solid rgba(255, 255, 255, 0.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    .dock-btn:hover {
+      color: var(--accent-violet);
+      box-shadow: var(--neu-hover);
+      transform: translateY(-1px);
+    }
+
+    .dock-btn.active {
+      color: var(--accent-violet);
+      box-shadow: var(--neu-pressed);
+    }
+
+    .dock-status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+      animation: pulse 1.8s infinite;
+    }
+
+    /* Main Viewport Container */
+    .app-main {
+      flex: 1;
+      height: 100vh;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      padding: 8px 14px 6px 14px;
+      gap: 6px;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    /* Row 1: Slim Header & Compact KPI Bar (~36px) */
+    .top-nav-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 0;
-      flex-wrap: wrap;
-      gap: 10px;
+      height: 36px;
       flex-shrink: 0;
+      gap: 12px;
     }
 
     .brand-group {
       display: flex;
       align-items: center;
-      gap: 12px;
-    }
-
-    .badge-update {
-      background: var(--accent-coral-grad);
-      color: #fff;
-      font-size: 10px;
-      font-weight: 800;
-      letter-spacing: 0.6px;
-      text-transform: uppercase;
-      padding: 4px 10px;
-      border-radius: 16px;
-      box-shadow: 0 3px 8px rgba(255, 118, 68, 0.3);
-    }
-
-    .badge-version {
-      background: #e2e8f0;
-      color: #4a5568;
-      font-size: 10.5px;
-      font-weight: 700;
-      padding: 4px 10px;
-      border-radius: 16px;
-      box-shadow: var(--neu-flat-sm);
+      gap: 10px;
     }
 
     h1.brand-title {
-      font-size: 20px;
+      font-size: 18px;
       font-weight: 800;
-      letter-spacing: -0.5px;
-      color: #1a202c;
+      letter-spacing: -0.4px;
+      color: #1e293b;
     }
 
-    .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 10px;
+    .badge-version {
+      background: var(--card-bg);
+      color: var(--text-muted);
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 12px;
+      box-shadow: var(--neu-flat-sm);
+      border: 1px solid rgba(255, 255, 255, 0.7);
     }
 
     .neu-btn {
       background: var(--card-bg);
-      border: 1px solid rgba(255, 255, 255, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.7);
       border-radius: 10px;
-      padding: 6px 14px;
+      padding: 5px 12px;
       font-family: inherit;
-      font-size: 11.5px;
-      font-weight: 600;
+      font-size: 11px;
+      font-weight: 700;
       color: var(--text-main);
       box-shadow: var(--neu-flat-sm);
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.18s ease;
+      white-space: nowrap;
     }
 
     .neu-btn:hover {
@@ -156,40 +217,34 @@
     }
 
     .neu-btn-primary {
-      background: var(--accent-coral-grad);
-      color: #ffffff;
+      background: var(--accent-violet-grad);
+      color: #ffffff !important;
       border: none;
-      box-shadow: 0 4px 12px rgba(255, 118, 68, 0.35);
+      box-shadow: var(--accent-purple-glow);
     }
 
     .neu-btn-primary:hover {
-      box-shadow: 0 6px 16px rgba(255, 118, 68, 0.45);
+      box-shadow: 0 6px 18px rgba(99, 102, 241, 0.48);
       transform: translateY(-1px);
     }
 
-    /* Compact Horizontal KPI Strip (Replaces Bulky 150px Cards) */
+    /* KPI Chips Strip */
     .kpi-strip {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
-      flex-shrink: 0;
+      display: flex;
+      gap: 8px;
+      align-items: center;
     }
 
     .kpi-chip {
       background: var(--card-bg);
       border-radius: 12px;
-      padding: 7px 12px;
+      padding: 4px 10px;
       box-shadow: var(--neu-flat-sm);
-      border: 1px solid rgba(255, 255, 255, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.75);
       display: flex;
       align-items: center;
-      justify-content: space-between;
       gap: 8px;
       transition: transform 0.15s ease;
-    }
-
-    .kpi-chip:hover {
-      transform: translateY(-1px);
     }
 
     .kpi-chip-title {
@@ -197,140 +252,122 @@
       text-transform: uppercase;
       font-weight: 800;
       color: var(--text-muted);
-      letter-spacing: 0.5px;
+      letter-spacing: 0.4px;
     }
 
     .kpi-chip-val {
-      font-size: 15px;
+      font-size: 13px;
       font-weight: 800;
-      color: #1a202c;
-      line-height: 1.2;
-    }
-
-    .kpi-chip-sub {
-      font-size: 9.5px;
-      color: var(--text-light);
-      white-space: nowrap;
+      color: #1e293b;
     }
 
     .kpi-chip-badge {
-      width: 26px;
-      height: 26px;
-      border-radius: 50%;
+      font-size: 9.5px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 8px;
       background: var(--card-bg);
       box-shadow: var(--neu-pressed);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 10px;
-      font-weight: 800;
-      flex-shrink: 0;
-    }
-
-    /* Main Workspace Split Layout (Adaptive 1-Screen) */
-    .workspace-layout {
-      display: grid;
-      grid-template-columns: 330px 1fr;
-      gap: 12px;
-      flex: 1;
-      min-height: 0;
-      overflow: hidden;
-      margin-bottom: 0;
-    }
-
-    /* Left Control & Ingestion Panel */
-    .control-panel {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      overflow-y: auto;
-      max-height: 100%;
-      padding-right: 2px;
-    }
-
-    .neu-card {
-      background: var(--card-bg);
-      border-radius: 16px;
-      padding: 12px 14px;
-      box-shadow: var(--neu-card);
-      border: 1px solid rgba(255, 255, 255, 0.7);
-    }
-
-    .card-title {
-      font-size: 13px;
-      font-weight: 800;
-      color: #1a202c;
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    /* Compact Drop Zone */
-    .dropzone {
-      border: 2px dashed #cbd4e1;
-      border-radius: 12px;
-      padding: 12px 8px;
-      text-align: center;
-      cursor: pointer;
-      background: var(--card-bg);
-      box-shadow: var(--neu-pressed);
-      transition: all 0.25s ease;
-      position: relative;
-    }
-
-    .dropzone:hover, .dropzone.dragover {
-      border-color: var(--accent-coral);
-      box-shadow: inset 2px 2px 5px #cbd4e1, inset -2px -2px 5px #ffffff, 0 0 10px rgba(255, 118, 68, 0.25);
-    }
-
-    .drop-icon {
-      width: 32px;
-      height: 32px;
-      margin: 0 auto 4px;
-      border-radius: 50%;
-      background: var(--card-bg);
-      box-shadow: var(--neu-flat-sm);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--accent-coral);
-      font-size: 16px;
-    }
-
-    .dropzone h4 {
-      font-size: 12px;
-      font-weight: 700;
-      color: #2d3748;
-      margin-bottom: 2px;
-    }
-
-    .dropzone p {
-      font-size: 10px;
       color: var(--text-muted);
     }
 
-    .dropzone input[type="file"] {
-      display: none;
+    .kpi-chip-violet {
+      border-color: rgba(99, 102, 241, 0.35);
+    }
+    .kpi-chip-violet .kpi-chip-val {
+      color: var(--accent-violet);
+    }
+    .kpi-badge-violet {
+      color: var(--accent-violet);
+      font-weight: 900;
     }
 
-    /* Model Selector (Segmented Neumorphic Control) */
-    .segmented-control {
+    /* Row 2: Unified Single-Row Control Bar (~48px) */
+    .unified-control-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 5px 12px;
+      background: var(--card-bg);
+      border-radius: 16px;
+      box-shadow: var(--neu-card);
+      border: 1px solid rgba(255, 255, 255, 0.75);
+      flex-shrink: 0;
+      min-height: 48px;
+      box-sizing: border-box;
+      overflow-x: auto;
+    }
+
+    .upload-capsule {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      background: var(--card-bg);
+      box-shadow: var(--neu-flat-sm);
+      border: 1px dashed #cbd5e1;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 700;
+      color: #1e293b;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .upload-capsule:hover, .upload-capsule.dragover {
+      border-color: var(--accent-violet);
+      box-shadow: inset 2px 2px 5px #cbd4e1, inset -2px -2px 5px #ffffff, 0 0 8px rgba(99, 102, 241, 0.3);
+      color: var(--accent-violet);
+    }
+
+    .presets-capsule {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .preset-chip {
+      padding: 4px 9px;
+      border-radius: 10px;
+      font-size: 10.5px;
+      font-weight: 700;
+      background: var(--card-bg);
+      box-shadow: var(--neu-flat-sm);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      cursor: pointer;
+      color: #334155;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .preset-chip:hover {
+      color: var(--accent-violet);
+      box-shadow: var(--neu-hover);
+    }
+
+    /* 5-Button Segmented Track in ONE Single Row */
+    .model-segmented-track {
       display: grid;
-      grid-template-columns: repeat(6, 1fr);
+      grid-template-columns: repeat(5, 1fr);
+      gap: 3px;
       background: var(--card-bg);
       box-shadow: var(--neu-pressed);
-      padding: 4px;
-      border-radius: 12px;
-      margin-bottom: 8px;
-      gap: 4px;
+      padding: 3px 4px;
+      border-radius: 20px;
+      align-items: center;
+      flex: 1;
+      max-width: 510px;
+      min-width: 380px;
       box-sizing: border-box;
-      width: 100%;
     }
 
     .segment-btn {
-      padding: 6px 3px;
-      border-radius: 8px;
+      padding: 6px 6px;
+      border-radius: 16px;
       border: none;
       background: transparent;
       font-family: inherit;
@@ -338,194 +375,251 @@
       font-weight: 700;
       color: var(--text-muted);
       cursor: pointer;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.18s ease;
       text-align: center;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       white-space: nowrap;
-      min-width: 0;
-      overflow: hidden;
     }
 
     .segment-btn.active {
       background: var(--card-bg);
-      color: #1a202c;
+      color: var(--accent-violet);
       box-shadow: var(--neu-flat-sm);
+      font-weight: 800;
+      border: 1px solid rgba(255, 255, 255, 0.85);
     }
 
-    .segment-btn.span-2 {
-      grid-column: span 2;
-    }
-
-    .segment-btn.span-3 {
-      grid-column: span 3;
-    }
-
-    /* Preset Buttons */
-    .presets-row {
+    /* Preprocessing Normalization Toggles */
+    .preprocessing-toggles {
       display: flex;
       gap: 6px;
-      flex-wrap: wrap;
-      margin-top: 8px;
+      align-items: center;
+      flex-shrink: 0;
     }
 
-    .preset-chip {
-      padding: 4px 10px;
-      border-radius: 10px;
-      font-size: 10.5px;
-      font-weight: 600;
+    .toggle-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 9px;
+      border-radius: 12px;
       background: var(--card-bg);
       box-shadow: var(--neu-flat-sm);
-      border: 1px solid rgba(255, 255, 255, 0.6);
       cursor: pointer;
+      font-size: 11px;
+      font-weight: 700;
+      color: #334155;
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      user-select: none;
       transition: all 0.15s ease;
+      white-space: nowrap;
     }
 
-    .preset-chip:hover {
-      box-shadow: var(--neu-hover);
-      color: var(--accent-coral);
+    .toggle-pill input[type="checkbox"] {
+      accent-color: var(--accent-violet);
+      cursor: pointer;
     }
 
-    /* Right Split: Document Viewer & OCR Workspace */
-    .viewer-panel {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      flex: 1;
-      min-height: 0;
-      overflow: hidden;
-    }
-
-    /* Active Document Header Strip */
-    .active-doc-strip {
-      padding: 8px 12px;
+    /* Row 3: Active Document Context & Reasoning Ribbon (~32px) */
+    .context-ribbon {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-radius: 14px;
-      flex-shrink: 0;
-      margin-bottom: 0;
-    }
-
-    .active-doc-left {
-      display: flex;
-      align-items: center;
       gap: 10px;
-      min-width: 0;
-    }
-
-    .doc-icon-badge {
-      font-size: 18px;
-      width: 32px;
       height: 32px;
-      border-radius: 10px;
-      background: var(--card-bg);
-      box-shadow: var(--neu-flat-sm);
-      display: flex;
-      align-items: center;
-      justify-content: center;
       flex-shrink: 0;
     }
 
-    .active-doc-text {
-      min-width: 0;
-    }
-
-    .doc-title-row {
+    .active-doc-capsule {
       display: flex;
       align-items: center;
       gap: 8px;
+      padding: 3px 12px;
+      background: var(--card-bg);
+      border-radius: 12px;
+      box-shadow: var(--neu-flat-sm);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      min-width: 0;
     }
 
     .doc-title-text {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 800;
       color: #1e293b;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 360px;
+      max-width: 280px;
     }
 
     .doc-meta-text {
       font-size: 10.5px;
       color: var(--text-muted);
-      margin-top: 1px;
+      white-space: nowrap;
     }
 
-    .active-doc-actions {
-      display: flex;
-      gap: 6px;
+    .badge-status {
+      display: inline-flex;
       align-items: center;
-      flex-shrink: 0;
+      gap: 4px;
+      padding: 2px 7px;
+      border-radius: 8px;
+      font-size: 10px;
+      font-weight: 800;
+    }
+    .badge-completed {
+      background: rgba(16, 185, 129, 0.15);
+      color: #059669;
+    }
+    .badge-pending {
+      background: rgba(245, 158, 11, 0.15);
+      color: #d97706;
+    }
+    .badge-processing {
+      background: rgba(99, 102, 241, 0.15);
+      color: var(--accent-violet);
+      animation: pulse 1.5s infinite;
+    }
+    .badge-failed {
+      background: rgba(239, 68, 68, 0.15);
+      color: #dc2626;
     }
 
-    .tabs-header {
+    /* Agent Chain-of-Thought Capsule */
+    .agent-thought-capsule {
+      position: relative;
       display: flex;
-      gap: 8px;
-      border-bottom: 2px solid #e2e8f0;
-      padding-bottom: 4px;
-      flex-shrink: 0;
-    }
-
-    .tab-item {
-      padding: 5px 14px;
-      border-radius: 10px;
-      font-size: 11.5px;
-      font-weight: 700;
-      cursor: pointer;
+      align-items: center;
       background: var(--card-bg);
+      border-radius: 12px;
+      padding: 3px 10px;
       box-shadow: var(--neu-flat-sm);
-      border: 1px solid rgba(255, 255, 255, 0.6);
-      color: var(--text-muted);
-      transition: all 0.2s ease;
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      flex: 1;
+      max-width: 580px;
     }
 
-    .tab-item.active {
-      color: var(--accent-coral);
+    .thought-capsule-summary {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      cursor: pointer;
+    }
+
+    .pulsing-brain {
+      font-size: 13px;
+      animation: pulse 1.4s infinite;
+      display: inline-block;
+    }
+
+    .thought-capsule-title {
+      font-size: 11px;
+      font-weight: 800;
+      color: #1e293b;
+      white-space: nowrap;
+    }
+
+    .badge-thought-status {
+      font-size: 9.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 8px;
+      background: #e0e7ff;
+      color: var(--accent-violet);
+      box-shadow: inset 1px 1px 2px #c7d2fe, inset -1px -1px 2px #ffffff;
+      white-space: nowrap;
+    }
+
+    .thought-progress-bar-wrap {
+      flex: 1;
+      height: 5px;
+      background: var(--card-bg);
       box-shadow: var(--neu-pressed);
+      border-radius: 4px;
+      overflow: hidden;
+      min-width: 60px;
     }
 
-    /* Canvas / Image Preview Container */
-    .viewer-workspace {
+    .thought-progress-bar {
+      height: 100%;
+      background: var(--accent-violet-grad);
+      border-radius: 4px;
+      transition: width 0.3s ease;
+      box-shadow: 0 0 6px rgba(99, 102, 241, 0.5);
+    }
+
+    .thought-feed-flyout {
+      position: absolute;
+      top: 36px;
+      right: 0;
+      width: 440px;
+      max-height: 200px;
+      overflow-y: auto;
+      background: #ffffff;
+      border-radius: 14px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15), var(--neu-flat);
+      padding: 10px;
+      z-index: 50;
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+    }
+
+    .thought-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      line-height: 1.35;
+      padding: 3px 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .thought-time { color: #94a3b8; font-size: 10px; flex-shrink: 0; }
+    .thought-title { color: #1e293b; font-weight: 800; }
+    .thought-detail { color: #64748b; }
+
+    /* Row 4: Side-by-Side Main Workspace (Left Canvas 52% | Right Hierarchy 48%) */
+    .workspace-split {
       display: grid;
-      grid-template-columns: 1.15fr 1fr;
+      grid-template-columns: 1.1fr 1fr;
       gap: 10px;
       flex: 1;
       min-height: 0;
-      margin-top: 0;
       overflow: hidden;
     }
 
-    .canvas-card {
+    /* Left Panel: Visual Provenance Canvas */
+    .canvas-panel {
       background: var(--card-bg);
-      border-radius: 16px;
+      border-radius: 18px;
       padding: 10px 12px;
       box-shadow: var(--neu-card);
-      border: 1px solid rgba(255, 255, 255, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.75);
       display: flex;
       flex-direction: column;
-      position: relative;
       height: 100%;
       min-height: 0;
       overflow: hidden;
     }
 
-    .canvas-toolbar {
+    .panel-toolbar {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 6px;
-      flex-wrap: wrap;
-      gap: 6px;
       flex-shrink: 0;
+    }
+
+    .panel-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: #1e293b;
     }
 
     .canvas-viewport {
       flex: 1;
       background: #f8fafc;
-      border-radius: 12px;
+      border-radius: 14px;
       box-shadow: var(--neu-pressed);
       position: relative;
       overflow: auto;
@@ -547,116 +641,22 @@
       cursor: crosshair;
     }
 
-    .bbox-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      pointer-events: none;
-    }
-
-    /* Agent Chain-of-Thought Live Reasoning Console */
-    .agent-thought-card {
-      background: var(--card-bg);
-      border-radius: 14px;
-      padding: 7px 12px;
-      box-shadow: var(--neu-card);
-      border: 1px solid rgba(255, 255, 255, 0.85);
-      flex-shrink: 0;
-      margin-bottom: 0;
-      transition: all 0.25s ease;
-    }
-
-    .thought-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-    }
-
-    .pulsing-brain {
-      font-size: 15px;
-      animation: pulse 1.4s infinite;
-      display: inline-block;
-    }
-
-    .badge-thought-status {
-      font-size: 9.5px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      padding: 2px 7px;
-      border-radius: 10px;
-      background: #e0f2fe;
-      color: #0284c7;
-      box-shadow: inset 1px 1px 2px #bae6fd, inset -1px -1px 2px #ffffff;
-      transition: all 0.3s ease;
-    }
-
-    .thought-progress-bar-wrap {
-      width: 100%;
-      height: 5px;
-      background: var(--card-bg);
-      box-shadow: var(--neu-pressed);
-      border-radius: 4px;
-      overflow: hidden;
-      margin: 4px 0 0 0;
-    }
-
-    .thought-progress-bar {
-      height: 100%;
-      background: var(--accent-coral-grad);
-      border-radius: 4px;
-      transition: width 0.35s ease;
-      box-shadow: 0 0 8px rgba(255, 118, 68, 0.4);
-    }
-
-    .thought-feed {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      max-height: 80px;
-      overflow-y: auto;
-      padding: 6px 10px;
+    .canvas-footer-coords {
       margin-top: 6px;
-      background: #f8fafc;
-      border-radius: 10px;
-      box-shadow: var(--neu-pressed);
-      font-family: 'SF Mono', Monaco, Consolas, monospace;
-      font-size: 11px;
-      transition: all 0.25s ease;
-    }
-
-    .thought-item {
       display: flex;
-      align-items: flex-start;
-      gap: 8px;
-      line-height: 1.35;
-      animation: fadeIn 0.25s ease;
-    }
-
-    .thought-time {
-      color: #94a3b8;
-      font-weight: 600;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-muted);
       flex-shrink: 0;
-      font-size: 10px;
     }
 
-    .thought-title {
-      color: #1e293b;
-      font-weight: 800;
-    }
-
-    .thought-detail {
-      color: #64748b;
-    }
-
-    /* Results / Text Inspector */
-    .results-card {
+    /* Right Panel: Extracted Elements Hierarchy (Styled like Reference Watchlist) */
+    .results-panel {
       background: var(--card-bg);
-      border-radius: 16px;
+      border-radius: 18px;
       padding: 10px 12px;
       box-shadow: var(--neu-card);
-      border: 1px solid rgba(255, 255, 255, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.75);
       display: flex;
       flex-direction: column;
       height: 100%;
@@ -664,15 +664,209 @@
       overflow: hidden;
     }
 
-    /* Collapsible Bottom History Drawer */
-    .history-drawer {
+    .tabs-header {
+      display: flex;
+      gap: 6px;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 4px;
+      flex-shrink: 0;
+    }
+
+    .tab-item {
+      padding: 5px 12px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      background: var(--card-bg);
+      box-shadow: var(--neu-flat-sm);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      color: var(--text-muted);
+      transition: all 0.2s ease;
+    }
+
+    .tab-item.active {
+      color: var(--accent-violet);
+      box-shadow: var(--neu-pressed);
+      font-weight: 800;
+    }
+
+    .tab-content {
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 2px;
+      display: none;
+      min-height: 0;
+      margin-top: 6px;
+    }
+
+    .tab-content.active {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .elements-filter-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #e2e8f0;
+      flex-shrink: 0;
+    }
+
+    .pill-group {
+      display: flex;
+      gap: 3px;
+      background: #e2e8f0;
+      padding: 3px;
+      border-radius: 12px;
+      box-shadow: var(--neu-pressed);
+    }
+
+    .pill-btn {
+      border: none;
+      background: transparent;
+      padding: 4px 10px;
+      border-radius: 9px;
+      font-size: 10.5px;
+      font-weight: 700;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .pill-btn.active {
+      background: var(--card-bg);
+      color: var(--accent-violet);
+      box-shadow: var(--neu-flat-sm);
+    }
+
+    .type-select {
+      padding: 3px 6px;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      background: var(--card-bg);
+      color: #334155;
+    }
+
+    .pagination-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 10.5px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      flex-shrink: 0;
+    }
+
+    .pagination-nav {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    /* Stacked Neumorphic Element Cards (Reference Watchlist Style) */
+    .element-cards-container {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      min-height: 0;
+      padding: 2px 2px 4px 2px;
+    }
+
+    .element-item {
+      background: var(--card-bg);
       border-radius: 14px;
-      padding: 6px 14px;
+      padding: 8px 12px;
+      box-shadow: var(--neu-flat-sm);
+      border: 1px solid rgba(255, 255, 255, 0.75);
+      transition: all 0.18s ease;
+      cursor: pointer;
+    }
+
+    .element-item:hover, .element-item.active-focus {
+      box-shadow: 0 4px 16px rgba(99, 102, 241, 0.22), var(--neu-flat-sm);
+      border-color: var(--accent-violet);
+      transform: translateY(-1px);
+    }
+
+    .elem-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .elem-well {
+      background: #f8fafc;
+      padding: 6px 10px;
+      border-radius: 10px;
+      box-shadow: var(--neu-pressed);
+      margin-bottom: 4px;
+    }
+
+    .elem-text {
+      font-size: 11px;
+      line-height: 1.4;
+      color: #1e293b;
+      word-break: break-word;
+    }
+
+    .elem-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 9.5px;
+      color: var(--text-light);
+    }
+
+    .elem-bbox {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .neu-text-toggle {
+      background: none;
+      border: none;
+      color: var(--accent-violet);
+      font-size: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 2px 0 0 0;
+      display: inline-block;
+    }
+
+    /* Markdown & JSON Previews */
+    .code-preview {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      background: #1e293b;
+      color: #f1f5f9;
+      padding: 14px;
+      border-radius: 12px;
+      overflow: auto;
+      white-space: pre-wrap;
+      line-height: 1.5;
+      flex: 1;
+      min-height: 0;
+    }
+
+    /* Row 5: Collapsible Bottom History Drawer (~28px) */
+    .history-drawer {
+      background: var(--card-bg);
+      border-radius: 14px;
+      padding: 4px 12px;
       box-shadow: var(--neu-card);
       border: 1px solid rgba(255, 255, 255, 0.7);
       flex-shrink: 0;
-      transition: all 0.3s ease;
-      margin-top: 0;
+      transition: all 0.25s ease;
     }
 
     .drawer-header {
@@ -681,476 +875,258 @@
       justify-content: space-between;
       cursor: pointer;
       user-select: none;
-      padding: 2px 0;
     }
 
     .drawer-title {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
 
     .drawer-body {
       margin-top: 6px;
       padding-top: 6px;
       border-top: 1px solid #e2e8f0;
-      animation: fadeIn 0.25s ease;
-    }
-
-    @media (max-height: 800px) or (max-width: 1100px) {
-      body {
-        height: auto;
-        overflow-y: auto;
-      }
-      .container {
-        height: auto;
-        min-height: 100vh;
-      }
-      .workspace-layout {
-        grid-template-columns: 1fr;
-      }
-      .viewer-workspace {
-        grid-template-columns: 1fr;
-        height: 600px;
-      }
-    }
-
-    .tab-content {
-      flex: 1;
-      overflow-y: auto;
-      padding-right: 4px;
-      display: none;
-      min-height: 0;
-    }
-
-    .tab-content.active {
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* Elements List & Filters */
-    .elements-filter-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid #e2e8f0;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .pill-group {
-      display: flex;
-      gap: 4px;
-      background: #e9eff6;
-      padding: 3px;
-      border-radius: 10px;
-      box-shadow: var(--neu-pressed);
-    }
-
-    .pill-btn {
-      border: none;
-      background: transparent;
-      padding: 4px 10px;
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text-muted);
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-
-    .pill-btn.active {
-      background: #ffffff;
-      color: var(--accent-coral);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-    }
-
-    .pagination-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 8px 2px;
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text-muted);
-      flex-shrink: 0;
-    }
-
-    .element-cards-container {
-      flex: 1;
-      overflow-y: auto;
-      padding-right: 4px;
-      min-height: 0;
-    }
-
-    .element-item {
-      background: var(--card-bg);
-      border-radius: 14px;
-      padding: 12px 14px;
-      margin-bottom: 10px;
-      box-shadow: var(--neu-flat-sm);
-      border-left: 4px solid var(--accent-blue);
-      cursor: pointer;
-      transition: all 0.2s ease;
-      position: relative;
-    }
-
-    .element-item:hover {
-      box-shadow: var(--neu-hover);
-      transform: translateX(2px);
-    }
-
-    .element-item.active-focus {
-      box-shadow: 0 0 0 2px var(--accent-coral), var(--neu-hover);
-      transform: translateX(3px);
-    }
-
-    .element-item.type-title { border-left-color: var(--accent-coral); }
-    .element-item.type-section_header { border-left-color: #8b5cf6; }
-    .element-item.type-paragraph { border-left-color: #3b82f6; }
-    .element-item.type-list_item { border-left-color: #f59e0b; }
-    .element-item.type-table { border-left-color: #00c9b7; }
-
-    .elem-meta {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 6px;
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text-muted);
-    }
-
-    .elem-well {
-      background: #f1f5f9;
-      box-shadow: inset 1px 1px 4px rgba(166, 175, 195, 0.4), inset -1px -1px 4px rgba(255, 255, 255, 0.8);
-      border-radius: 10px;
-      padding: 8px 12px;
-      margin: 6px 0;
-    }
-
-    .elem-text {
-      font-size: 12.5px;
-      line-height: 1.5;
-      color: #1e293b;
-      word-break: break-word;
-      max-height: 85px;
-      overflow-y: auto;
-    }
-
-    .neu-text-toggle {
-      background: transparent;
-      border: none;
-      color: var(--accent-coral);
-      font-size: 11px;
-      font-weight: 700;
-      cursor: pointer;
-      padding: 3px 0 0 0;
-      display: inline-block;
-    }
-
-    .neu-text-toggle:hover {
-      text-decoration: underline;
-    }
-
-    .elem-footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 6px;
-      font-size: 10.5px;
-    }
-
-    .elem-bbox {
-      font-family: 'JetBrains Mono', monospace;
-      color: var(--text-light);
-    }
-
-    /* Markdown & JSON Previews */
-    .code-preview {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 12px;
-      background: #1e293b;
-      color: #f1f5f9;
-      padding: 16px;
-      border-radius: 12px;
-      overflow: auto;
-      white-space: pre-wrap;
-      line-height: 1.6;
-      flex: 1;
-      min-height: 0;
-    }
-
-    /* Live History Table */
-    .history-card {
-      margin-top: 10px;
+      animation: fadeIn 0.2s ease;
     }
 
     .history-table {
       width: 100%;
       border-collapse: separate;
-      border-spacing: 0 8px;
+      border-spacing: 0 6px;
     }
 
     .history-table th {
       text-align: left;
-      font-size: 11px;
+      font-size: 10px;
       text-transform: uppercase;
-      letter-spacing: 0.6px;
+      letter-spacing: 0.5px;
       color: var(--text-muted);
-      padding: 8px 14px;
+      padding: 6px 10px;
       font-weight: 700;
     }
 
     .history-table tr td {
       background: var(--card-bg);
-      padding: 14px;
-      font-size: 13px;
+      padding: 8px 10px;
+      font-size: 11.5px;
       font-weight: 600;
       box-shadow: var(--neu-flat-sm);
     }
 
     .history-table tr td:first-child {
-      border-top-left-radius: 14px;
-      border-bottom-left-radius: 14px;
+      border-top-left-radius: 10px;
+      border-bottom-left-radius: 10px;
     }
     .history-table tr td:last-child {
-      border-top-right-radius: 14px;
-      border-bottom-right-radius: 14px;
+      border-top-right-radius: 10px;
+      border-bottom-right-radius: 10px;
     }
 
-    .badge-status {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 4px 10px;
-      border-radius: 10px;
-      font-size: 11px;
-      font-weight: 700;
-    }
-    .badge-completed {
-      background: rgba(16, 185, 129, 0.15);
-      color: #059669;
-    }
-    .badge-pending {
-      background: rgba(245, 158, 11, 0.15);
-      color: #d97706;
-    }
-    .badge-processing {
-      background: rgba(59, 130, 246, 0.15);
-      color: #2563eb;
-      animation: pulse 1.5s infinite;
-    }
-    .badge-failed {
-      background: rgba(239, 68, 68, 0.15);
-      color: #dc2626;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.6; transform: scale(0.98); }
-    }
     .btn-delete {
       color: #dc2626 !important;
       border-color: rgba(239, 68, 68, 0.3) !important;
     }
-    .btn-delete:hover {
-      background: rgba(239, 68, 68, 0.1) !important;
-      color: #b91c1c !important;
-    }
 
-    /* Empty state */
     .empty-state {
       text-align: center;
-      padding: 40px 20px;
+      padding: 30px 16px;
       color: var(--text-muted);
+      font-size: 12px;
     }
-    .empty-state svg {
-      width: 48px;
-      height: 48px;
-      margin-bottom: 12px;
-      opacity: 0.6;
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(0.97); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
 <body>
 
-  <div class="container">
-    <!-- Header -->
-    <header>
-      <div class="brand-group">
-        <span class="badge-update">NEW UPDATE</span>
-        <h1 class="brand-title">Open Doc Intelligence</h1>
-        <span class="badge-version">v0.1.0 Neumorphic UI</span>
-      </div>
+  <!-- Left Micro-Dock (Reference-Alike) -->
+  <aside class="left-dock">
+    <div class="dock-orb" title="Open Doc Intelligence Vision Studio" onclick="location.reload()"></div>
+    <div class="dock-nav">
+      <button class="dock-btn active" title="Dashboard Workspace" onclick="switchTab('elements')">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+      </button>
+      <button class="dock-btn" title="Recent Ingested Documents" onclick="toggleHistoryDrawer()">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      </button>
+      <a href="/codebase-graph" target="_blank" class="dock-btn" title="AST Codebase Architecture Graph">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      </a>
+      <button class="dock-btn" title="Benchmarks & Accuracy" onclick="switchTab('eval')">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      </button>
+      <a href="/docs" target="_blank" class="dock-btn" title="FastAPI API Documentation">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+      </a>
+    </div>
+    <div class="dock-bottom">
+      <div class="dock-status-dot" title="DocIntel Engine: Connected & Ready"></div>
+    </div>
+  </aside>
 
-      <div class="header-actions">
-        <button class="neu-btn" id="btnRefreshDiagnostics">
-          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+  <!-- Main Viewport Container -->
+  <main class="app-main">
+    <!-- Row 1: Slim Header & Compact KPI Bar -->
+    <header class="top-nav-bar">
+      <div class="brand-group">
+        <h1 class="brand-title">Open Doc Intelligence</h1>
+        <span class="badge-version">v0.1.0 Neumorphic Studio</span>
+        <button class="neu-btn" id="btnRefreshDiagnostics" onclick="showSystemHealthModal()" title="View System Health & Telemetry Diagnostics">
+          <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
           System Health
         </button>
-        <a href="/docs" target="_blank" class="neu-btn">
-          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
-          FastAPI Docs
-        </a>
+      </div>
+
+      <!-- Compact KPI Chips -->
+      <div class="kpi-strip">
+        <div class="kpi-chip">
+          <span class="kpi-chip-title">Ingested</span>
+          <span class="kpi-chip-val" id="kpiDocCount">0</span>
+          <span class="kpi-chip-badge" id="kpiDocPercent">100%</span>
+        </div>
+        <div class="kpi-chip">
+          <span class="kpi-chip-title">Vision Model</span>
+          <span class="kpi-chip-val" id="kpiActiveModel">GLM-OCR 0.9B</span>
+          <span class="kpi-chip-badge">FP16</span>
+        </div>
+        <div class="kpi-chip">
+          <span class="kpi-chip-title">Target VRAM</span>
+          <span class="kpi-chip-val" id="kpiVram">2.2 GB</span>
+          <span class="kpi-chip-badge">54%</span>
+        </div>
+        <div class="kpi-chip kpi-chip-violet">
+          <span class="kpi-chip-title">Accuracy</span>
+          <span class="kpi-chip-val" id="kpiAccuracy">98.4%</span>
+          <span class="kpi-chip-badge kpi-badge-violet">98%</span>
+        </div>
       </div>
     </header>
 
-    <!-- Compact Horizontal KPI Strip -->
-    <section class="kpi-strip">
-      <div class="kpi-chip">
-        <div>
-          <div class="kpi-chip-title">Documents Ingested</div>
-          <div class="kpi-chip-val" id="kpiDocCount">0</div>
-          <div class="kpi-chip-sub"><span style="color: var(--accent-green)">●</span> Real-time SQLite</div>
-        </div>
-        <div class="kpi-chip-badge" style="color: #3b82f6;" id="kpiDocPercent">100%</div>
+    <!-- Row 2: Unified Control Bar (Ingestion + 5-Button Model Selector in ONE row + Preprocessing + Execute) -->
+    <section class="unified-control-bar">
+      <!-- File Ingestion Drop Capsule -->
+      <div class="upload-capsule" id="dropZone" title="Click or drop file to upload">
+        <span style="font-size: 14px;">📂</span>
+        <span>Choose / Drop Document</span>
+        <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg,.tiff,.bmp,.webp,.docx,.txt,.md" style="display: none;">
       </div>
 
-      <div class="kpi-chip">
-        <div>
-          <div class="kpi-chip-title">Active Vision Model</div>
-          <div class="kpi-chip-val" id="kpiActiveModel" style="font-size: 13.5px;">GLM-OCR 0.9B</div>
-          <div class="kpi-chip-sub">Dense Layout &amp; Handwriting</div>
-        </div>
-        <div class="kpi-chip-badge" style="color: var(--accent-coral);">FP16</div>
+      <!-- Demo Presets -->
+      <div class="presets-capsule">
+        <button class="preset-chip" onclick="loadInteractiveSample('research-paper')" title="Load Research Paper Sample">📄 Paper</button>
+        <button class="preset-chip" onclick="loadInteractiveSample('handwriting')" title="Load Handwriting Note Sample">✍️ Handwriting</button>
+        <button class="preset-chip" onclick="loadSampleInvoice()" title="Load Invoice Sample">🧾 Invoice</button>
       </div>
 
-      <div class="kpi-chip">
-        <div>
-          <div class="kpi-chip-title">Target VRAM Ceiling</div>
-          <div class="kpi-chip-val" id="kpiVram">2.2 GB</div>
-          <div class="kpi-chip-sub">RTX 3050 (4GB Safe)</div>
-        </div>
-        <div class="kpi-chip-badge" style="color: var(--accent-teal);">54%</div>
+      <!-- 5-Button Model Selector in ONE Row -->
+      <div class="model-segmented-track" title="OCR Model Selection (1-Row)">
+        <button class="segment-btn active" id="btnGlm" onclick="selectModel('glm_ocr')">GLM-OCR</button>
+        <button class="segment-btn" id="btnHtr" onclick="selectModel('handwriting')">Handwriting</button>
+        <button class="segment-btn" id="btnFlorence" onclick="selectModel('florence2')">Florence-2</button>
+        <button class="segment-btn" id="btnPaddle" onclick="selectModel('paddle')">PaddleOCR</button>
+        <button class="segment-btn" id="btnDocling" onclick="selectModel('docling')">Docling</button>
       </div>
 
-      <div class="kpi-chip">
-        <div>
-          <div class="kpi-chip-title">Recognition Accuracy</div>
-          <div class="kpi-chip-val" id="kpiAccuracy">98.4%</div>
-          <div class="kpi-chip-sub">Mean CER: 0.016</div>
+      <!-- Preprocessing Normalization Toggles -->
+      <div class="preprocessing-toggles">
+        <label class="toggle-pill" title="300 DPI Preprocessing Normalization">
+          <input type="checkbox" id="chkDpi" checked>
+          <span>300 DPI</span>
+        </label>
+        <label class="toggle-pill" title="Contrast Enhancement & Binarize">
+          <input type="checkbox" id="chkContrast" checked>
+          <span>Contrast</span>
+        </label>
+        <label class="toggle-pill" title="Orientation Auto-Deskew">
+          <input type="checkbox" id="chkDeskew" checked>
+          <span>Deskew</span>
+        </label>
+      </div>
+
+      <!-- 🚀 Execute OCR Action Button -->
+      <button class="neu-btn neu-btn-primary" id="btnStartOcr" onclick="triggerOcrProcess()">
+        🚀 Execute OCR &amp; Extract Layout
+      </button>
+    </section>
+
+    <!-- Row 3: Active Document Context & Reasoning Ribbon -->
+    <section class="context-ribbon">
+      <div class="active-doc-capsule" id="activeDocBanner">
+        <span style="font-size: 14px;">📄</span>
+        <span id="activeDocTitle" class="doc-title-text" title="Commercial Invoice #INV-2026-904">Commercial Invoice #INV-2026-904</span>
+        <span id="activeDocBadge" class="badge-status badge-completed">● completed</span>
+        <span id="activeDocMeta" class="doc-meta-text">Sample Demo Preview · 1 Page</span>
+        <a id="btnDownloadRaw" href="#" target="_blank" class="neu-btn" style="padding: 2px 7px; font-size: 10px; display: none;">⬇️ Raw</a>
+        <button id="btnDeleteActiveDoc" class="neu-btn btn-delete" style="padding: 2px 7px; font-size: 10px; display: none;" onclick="deleteActiveDocument()">🗑️</button>
+      </div>
+
+      <!-- Real-Time Agent Chain-of-Thought Capsule -->
+      <div class="agent-thought-capsule" id="agentThoughtCard">
+        <div class="thought-capsule-summary" onclick="toggleThoughtFeed()">
+          <span class="pulsing-brain">🧠</span>
+          <span class="thought-capsule-title">Agent Reasoning:</span>
+          <span class="badge-thought-status" id="thoughtStatusBadge">Ready</span>
+          <div class="thought-progress-bar-wrap">
+            <div class="thought-progress-bar" id="thoughtProgressBar" style="width: 100%;"></div>
+          </div>
+          <span id="thoughtProgressPercent" style="font-size: 11px; font-weight: 800; color: var(--accent-violet);">100%</span>
+          <button class="neu-btn" id="btnToggleThoughts" style="padding: 2px 7px; font-size: 10px;" onclick="event.stopPropagation(); toggleThoughtFeed()">
+            Log ▼
+          </button>
         </div>
-        <div class="kpi-chip-badge" style="color: var(--accent-purple);">98%</div>
+        <div class="thought-feed-flyout" id="thoughtFeed" style="display: none;">
+          <div class="thought-item">
+            <span class="thought-time">--:--:--</span>
+            <span class="thought-title">Agent Initialized</span>
+            <span class="thought-detail">Waiting for document ingestion...</span>
+          </div>
+        </div>
       </div>
     </section>
 
-    <!-- Main Split-Screen Workspace -->
-    <div class="workspace-layout">
-      <!-- Left: Ingestion & Control Panel -->
-      <aside class="control-panel">
-        <div class="neu-card">
-          <div class="card-title">
-            <span>Document Ingestion</span>
-            <span class="badge-version">Drag & Drop</span>
+    <!-- Row 4: Side-by-Side Main Workspace (Left Canvas 52% | Right Hierarchy 48%) -->
+    <div class="workspace-split">
+      <!-- Left Panel: Visual Provenance Canvas -->
+      <section class="canvas-panel">
+        <div class="panel-toolbar">
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <span class="panel-title">Visual Provenance</span>
+            <span id="pageResolutionPill" class="preset-chip" style="font-size: 10px; padding: 1px 7px;">Page 1</span>
           </div>
-
-          <div class="dropzone" id="dropZone">
-            <div class="drop-icon">📄</div>
-            <h4>Drop PDF, Image or Office Doc</h4>
-            <p>PDF, PNG, JPEG, TIFF, DOCX, TXT (up to 100 MB)</p>
-            <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg,.tiff,.bmp,.webp,.docx,.txt,.md">
-          </div>
-
-          <!-- Quick Presets -->
-          <div style="margin-top: 16px;">
-            <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Interactive Demo Samples:</label>
-            <div class="presets-row">
-              <button class="preset-chip" style="font-weight: 800; color: #1e293b;" onclick="loadInteractiveSample('research-paper')">📄 Research Paper (Dense)</button>
-              <button class="preset-chip" style="font-weight: 800; color: #1e293b;" onclick="loadInteractiveSample('handwriting')">✍️ Handwritten Note</button>
-              <button class="preset-chip" onclick="loadSampleInvoice()">🧾 Receipt / Invoice</button>
+          <div style="display: flex; gap: 5px; align-items: center;">
+            <div style="display: flex; gap: 4px; align-items: center;" id="pageNav">
+              <button class="neu-btn" style="padding: 2px 8px; font-size: 11px;" title="Previous Page" onclick="changePage(-1)">◀</button>
+              <span id="pageIndicator" style="font-size: 11px; font-weight: 800; color: var(--text-main); min-width: 65px; text-align: center;">Page 1 / 1</span>
+              <button class="neu-btn" style="padding: 2px 8px; font-size: 11px;" title="Next Page" onclick="changePage(1)">▶</button>
             </div>
+            <select id="quickPageSelect" onchange="changePageTo(parseInt(this.value))" style="display:none; padding: 2px 6px; font-size: 11px; font-weight: 700; border-radius: 8px; border: 1px solid #cbd5e1; background: var(--card-bg); color: #334155;"></select>
+            <button class="neu-btn" style="padding: 2px 7px; font-size: 11px;" title="Zoom In" onclick="zoomCanvas(1.15)">＋</button>
+            <button class="neu-btn" style="padding: 2px 7px; font-size: 11px;" title="Zoom Out" onclick="zoomCanvas(0.85)">－</button>
+            <button class="neu-btn" style="padding: 2px 7px; font-size: 11px;" title="Reset Zoom" onclick="resetCanvas()">Fit</button>
           </div>
         </div>
 
-        <!-- OCR Engine Settings -->
-        <div class="neu-card">
-          <div class="card-title">
-            <span>OCR Model Selection</span>
-          </div>
-
-          <div class="segmented-control">
-            <button class="segment-btn span-2 active" id="btnGlm" onclick="selectModel('glm_ocr')">GLM-OCR</button>
-            <button class="segment-btn span-2" id="btnHtr" onclick="selectModel('handwriting')">Handwriting</button>
-            <button class="segment-btn span-2" id="btnFlorence" onclick="selectModel('florence2')">Florence-2</button>
-            <button class="segment-btn span-3" id="btnPaddle" onclick="selectModel('paddle')">PaddleOCR</button>
-            <button class="segment-btn span-3" id="btnDocling" onclick="selectModel('docling')">Docling</button>
-          </div>
-
-          <div style="display: flex; flex-direction: column; gap: 10px; font-size: 12px; font-weight: 600;">
-            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-              <input type="checkbox" id="chkDpi" checked> 300 DPI Preprocessing Normalization
-            </label>
-            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-              <input type="checkbox" id="chkContrast" checked> Contrast Enhancement & Binarize
-            </label>
-            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-              <input type="checkbox" id="chkDeskew" checked> Orientation Auto-Deskew
-            </label>
-          </div>
-
-          <button class="neu-btn neu-btn-primary" id="btnStartOcr" style="width: 100%; margin-top: 18px; justify-content: center;" onclick="triggerOcrProcess()">
-            🚀 Execute OCR & Extract Layout
-          </button>
-        </div>
-      </aside>
-
-      <!-- Right: Split-Screen Document Viewer & Extracted Hierarchy -->
-      <main class="viewer-panel">
-        <!-- Active Document Context Header -->
-        <div class="neu-card active-doc-strip" id="activeDocBanner">
-          <div class="active-doc-left">
-            <div class="doc-icon-badge">📄</div>
-            <div class="active-doc-text">
-              <div class="doc-title-row">
-                <span id="activeDocTitle" class="doc-title-text" title="Commercial Invoice #INV-2026-904">Commercial Invoice #INV-2026-904</span>
-                <span id="activeDocBadge" class="badge-status badge-completed">● completed</span>
-              </div>
-              <div id="activeDocMeta" class="doc-meta-text">
-                Sample Demo Preview · 1 Page · Pre-loaded
-              </div>
-            </div>
-          </div>
-          <div class="active-doc-actions" id="activeDocActions">
-            <a id="btnDownloadRaw" href="#" target="_blank" class="neu-btn" style="padding: 4px 10px; font-size: 11px; text-decoration: none; display: none;">
-              ⬇️ Raw File
-            </a>
-            <button id="btnDeleteActiveDoc" class="neu-btn btn-delete" style="padding: 4px 10px; font-size: 11px; display: none;" onclick="deleteActiveDocument()">
-              🗑️ Delete Document
-            </button>
-          </div>
+        <div class="canvas-viewport" id="viewport">
+          <canvas id="previewCanvas"></canvas>
         </div>
 
-        <!-- Real-Time Agent Chain of Thought & Reasoning Console -->
-        <div class="agent-thought-card" id="agentThoughtCard" style="display: none;">
-          <div class="thought-header">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <span class="pulsing-brain">🧠</span>
-              <span style="font-weight: 800; font-size: 13px; color: #1e293b;">Agent Live Chain-of-Thought</span>
-              <span class="badge-thought-status" id="thoughtStatusBadge">Thinking...</span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <span style="font-size: 11.5px; font-weight: 800; color: var(--accent-coral);" id="thoughtProgressPercent">0%</span>
-              <button class="neu-btn" id="btnToggleThoughts" style="padding: 3px 9px; font-size: 10px;" onclick="toggleThoughtFeed()">
-                Hide Thoughts ▲
-              </button>
-            </div>
-          </div>
-
-          <div class="thought-progress-bar-wrap">
-            <div class="thought-progress-bar" id="thoughtProgressBar" style="width: 0%;"></div>
-          </div>
-
-          <div class="thought-feed" id="thoughtFeed">
-            <div class="thought-item">
-              <span class="thought-time">--:--:--</span>
-              <span class="thought-title">Agent Initialized</span>
-              <span class="thought-detail">Waiting for document ingestion...</span>
-            </div>
-          </div>
+        <div class="canvas-footer-coords">
+          <span>Hover canvas bounding box to inspect text</span>
+          <span id="canvasCoords">X: 0 | Y: 0</span>
         </div>
+      </section>
 
+      <!-- Right Panel: Extracted Elements Hierarchy (Reference Watchlist Style) -->
+      <section class="results-panel">
         <div class="tabs-header">
           <div class="tab-item active" onclick="switchTab('elements')">Structured Elements</div>
           <div class="tab-item" onclick="switchTab('markdown')">Markdown Output</div>
@@ -1158,260 +1134,205 @@
           <div class="tab-item" onclick="switchTab('eval')">KPI Benchmarks</div>
         </div>
 
-        <div class="viewer-workspace">
-          <!-- Left: Canvas / Image with Bounding Boxes -->
-          <div class="canvas-card">
-            <div class="canvas-toolbar">
-              <div style="display: flex; gap: 8px; align-items: center;">
-                <span style="font-size: 13px; font-weight: 800; color: #1e293b;">Visual Provenance</span>
-                <span id="pageResolutionPill" class="preset-chip" style="font-size: 10px; padding: 1px 7px;">Page 1</span>
-              </div>
-              <div style="display: flex; gap: 5px; align-items: center;">
-                <!-- Page Navigation -->
-                <div style="display: flex; gap: 4px; align-items: center;" id="pageNav">
-                  <button class="neu-btn" style="padding: 2px 8px; font-size: 11px;" title="Previous Page" onclick="changePage(-1)">◀</button>
-                  <span id="pageIndicator" style="font-size: 11px; font-weight: 800; color: var(--text-main); min-width: 65px; text-align: center;">Page 1 / 1</span>
-                  <button class="neu-btn" style="padding: 2px 8px; font-size: 11px;" title="Next Page" onclick="changePage(1)">▶</button>
-                </div>
-                <!-- Quick Page Selector for multi-page docs -->
-                <select id="quickPageSelect" onchange="changePageTo(parseInt(this.value))" style="display:none; padding: 2px 6px; font-size: 11px; font-weight: 700; border-radius: 8px; border: 1px solid #cbd5e1; background: var(--card-bg); color: #334155;">
-                </select>
-                <!-- Zoom Controls -->
-                <button class="neu-btn" style="padding: 2px 7px; font-size: 11px;" title="Zoom In" onclick="zoomCanvas(1.15)">＋</button>
-                <button class="neu-btn" style="padding: 2px 7px; font-size: 11px;" title="Zoom Out" onclick="zoomCanvas(0.85)">－</button>
-                <button class="neu-btn" style="padding: 2px 7px; font-size: 11px;" title="Reset Zoom" onclick="resetCanvas()">Fit</button>
-              </div>
+        <!-- Tab 1: Elements (Watchlist Style Stacked Neumorphic Cards) -->
+        <div class="tab-content active" id="tabElements">
+          <div class="elements-filter-bar">
+            <div class="pill-group" id="scopeFilterGroup">
+              <button class="pill-btn active" id="btnScopePage" onclick="setElementScope('page')">Page Elements</button>
+              <button class="pill-btn" id="btnScopeAll" onclick="setElementScope('all')">All Pages</button>
             </div>
-
-            <div class="canvas-viewport" id="viewport">
-              <canvas id="previewCanvas"></canvas>
-            </div>
-            
-            <div style="margin-top: 8px; display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted);">
-              <span>Hover canvas bounding box to inspect text</span>
-              <span id="canvasCoords">X: 0 | Y: 0</span>
+            <div style="display: flex; gap: 6px; align-items: center;">
+              <span style="font-size: 11px; font-weight: 700; color: var(--text-muted);">Type:</span>
+              <select id="typeFilterSelect" onchange="setElementTypeFilter(this.value)" class="type-select">
+                <option value="all">All Types</option>
+                <option value="title">Titles</option>
+                <option value="section_header">Headers</option>
+                <option value="paragraph">Paragraphs</option>
+                <option value="list_item">Lists</option>
+                <option value="table">Tables</option>
+              </select>
             </div>
           </div>
 
-          <!-- Right: Tabbed Content -->
-          <div class="results-card">
-            <!-- Tab 1: Elements -->
-            <div class="tab-content active" id="tabElements">
-              <!-- Filter Bar & Scope Controls -->
-              <div class="elements-filter-bar">
-                <div class="pill-group" id="scopeFilterGroup">
-                  <button class="pill-btn active" id="btnScopePage" onclick="setElementScope('page')">Page Elements</button>
-                  <button class="pill-btn" id="btnScopeAll" onclick="setElementScope('all')">All Pages</button>
-                </div>
-                <div style="display: flex; gap: 4px; align-items: center;">
-                  <span style="font-size: 11px; font-weight: 700; color: var(--text-muted);">Type:</span>
-                  <select id="typeFilterSelect" onchange="setElementTypeFilter(this.value)" style="padding: 3px 6px; font-size: 11px; font-weight: 700; border-radius: 8px; border: 1px solid #cbd5e1; background: var(--card-bg); color: #334155;">
-                    <option value="all">All Types</option>
-                    <option value="title">Titles</option>
-                    <option value="section_header">Headers</option>
-                    <option value="paragraph">Paragraphs</option>
-                    <option value="list_item">Lists</option>
-                    <option value="table">Tables</option>
-                  </select>
-                </div>
-              </div>
+          <div class="pagination-bar" id="elemPaginationTop">
+            <span id="elemCountIndicator">Showing 0 elements</span>
+            <div class="pagination-nav">
+              <button class="neu-btn" style="padding: 2px 8px; font-size: 11px;" id="btnElemPrev" onclick="changeElementPage(-1)">◀ Prev</button>
+              <span id="elemPageIndicator">1 / 1</span>
+              <button class="neu-btn" style="padding: 2px 8px; font-size: 11px;" id="btnElemNext" onclick="changeElementPage(1)">Next ▶</button>
+            </div>
+          </div>
 
-              <!-- Top Pagination Bar -->
-              <div class="pagination-bar" id="elemPaginationTop">
-                <span id="elemCountIndicator">Showing 0 elements</span>
-                <div class="pagination-nav">
-                  <button class="neu-btn" style="padding: 2px 8px; font-size: 11px;" id="btnElemPrev" onclick="changeElementPage(-1)">◀ Prev</button>
-                  <span id="elemPageIndicator">1 / 1</span>
-                  <button class="neu-btn" style="padding: 2px 8px; font-size: 11px;" id="btnElemNext" onclick="changeElementPage(1)">Next ▶</button>
-                </div>
-              </div>
+          <!-- Stacked Neumorphic Cards Container -->
+          <div class="element-cards-container" id="elementsContainer">
+            <div class="empty-state">
+              <p>Upload a document or choose a sample to inspect extracted text blocks and coordinates.</p>
+            </div>
+          </div>
 
-              <!-- Scrollable Cards Container (Constrained!) -->
-              <div class="element-cards-container" id="elementsContainer">
-                <div class="empty-state">
-                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                  <p>Upload a document or choose a sample to inspect extracted text blocks, tables, and coordinates.</p>
-                </div>
-              </div>
+          <div class="pagination-bar" id="elemPaginationBottom" style="margin-top: 4px;">
+            <span style="font-size: 10px; color: var(--text-light);">Hover card to locate on canvas</span>
+            <div class="pagination-nav">
+              <button class="neu-btn" style="padding: 2px 8px; font-size: 11px;" onclick="changeElementPage(-1)">◀ Prev</button>
+              <span id="elemPageIndicatorBtm">1 / 1</span>
+              <button class="neu-btn" style="padding: 2px 8px; font-size: 11px;" onclick="changeElementPage(1)">Next ▶</button>
+            </div>
+          </div>
+        </div>
 
-              <!-- Bottom Pagination Bar -->
-              <div class="pagination-bar" id="elemPaginationBottom" style="margin-top: 6px;">
-                <span style="font-size: 10px; color: var(--text-light);">Hover card to locate on canvas</span>
-                <div class="pagination-nav">
-                  <button class="neu-btn" style="padding: 2px 8px; font-size: 11px;" onclick="changeElementPage(-1)">◀ Prev</button>
-                  <span id="elemPageIndicatorBtm">1 / 1</span>
-                  <button class="neu-btn" style="padding: 2px 8px; font-size: 11px;" onclick="changeElementPage(1)">Next ▶</button>
-                </div>
+        <!-- Tab 2: Markdown -->
+        <div class="tab-content" id="tabMarkdown">
+          <div style="display: flex; justify-content: flex-end; margin-bottom: 6px;">
+            <button class="neu-btn" style="padding: 3px 10px; font-size: 11px;" onclick="copyMarkdown()">Copy Markdown</button>
+          </div>
+          <pre class="code-preview" id="markdownPreview"># Markdown preview will render here...</pre>
+        </div>
+
+        <!-- Tab 3: JSON -->
+        <div class="tab-content" id="tabJson">
+          <div style="display: flex; justify-content: flex-end; margin-bottom: 6px;">
+            <button class="neu-btn" style="padding: 3px 10px; font-size: 11px;" onclick="downloadJson()">Download JSON</button>
+          </div>
+          <pre class="code-preview" id="jsonPreview">{ "status": "No document loaded" }</pre>
+        </div>
+
+        <!-- Tab 4: Evaluation Benchmarks -->
+        <div class="tab-content" id="tabEval">
+          <div style="display: flex; flex-direction: column; gap: 10px; padding-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+              <div>
+                <h3 style="font-size: 13px; font-weight: 800; color: #1e293b;">Automated Evaluation Engine</h3>
+                <p style="font-size: 10.5px; color: var(--text-muted);">Empirical verification via jiwer Levenshtein distance, layout F1, and AST topology.</p>
+              </div>
+              <div style="display: flex; gap: 6px;">
+                <a href="/codebase-graph" target="_blank" class="neu-btn" style="padding: 3px 8px; font-size: 10.5px; text-decoration: none; display: flex; align-items: center; gap: 4px; color: var(--text-main);" title="Open 2D AST Topology Explorer">
+                  <span>Interactive Graph</span>
+                  <span style="font-size: 9px;">↗</span>
+                </a>
+                <button class="neu-btn neu-btn-primary" id="btnRunEval" onclick="runLiveEvaluationSuite()" style="padding: 3px 10px; font-size: 10.5px; font-weight: 700;">
+                  <span id="btnRunEvalText">Run Benchmark Suite</span>
+                </button>
               </div>
             </div>
 
-            <!-- Tab 2: Markdown -->
-            <div class="tab-content" id="tabMarkdown">
-              <div style="display: flex; justify-content: flex-end; margin-bottom: 8px;">
-                <button class="neu-btn" style="padding: 4px 12px; font-size: 11px;" onclick="copyMarkdown()">Copy Markdown</button>
+            <!-- 4 KPI Cards Grid -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+              <div class="element-item" style="text-align: center; padding: 6px;">
+                <div style="font-size: 9.5px; text-transform: uppercase; font-weight: 800; color: var(--text-muted);">Mean CER</div>
+                <div style="font-size: 16px; font-weight: 900; color: var(--accent-green); margin-top: 1px;" id="kpiEvalCer">1.6%</div>
+                <div style="font-size: 8.5px; color: var(--accent-green); font-weight: 700;">Target &lt; 3.0% (98.4%)</div>
               </div>
-              <pre class="code-preview" id="markdownPreview"># Markdown preview will render here...</pre>
+              <div class="element-item" style="text-align: center; padding: 6px;">
+                <div style="font-size: 9.5px; text-transform: uppercase; font-weight: 800; color: var(--text-muted);">Mean WER</div>
+                <div style="font-size: 16px; font-weight: 900; color: var(--accent-blue); margin-top: 1px;" id="kpiEvalWer">3.4%</div>
+                <div style="font-size: 8.5px; color: var(--accent-blue); font-weight: 700;">Target &lt; 5.0%</div>
+              </div>
+              <div class="element-item" style="text-align: center; padding: 6px;">
+                <div style="font-size: 9.5px; text-transform: uppercase; font-weight: 800; color: var(--text-muted);">Layout F1</div>
+                <div style="font-size: 16px; font-weight: 900; color: var(--accent-purple); margin-top: 1px;" id="kpiEvalF1">0.981</div>
+                <div style="font-size: 8.5px; color: var(--accent-purple); font-weight: 700;">Macro Structure</div>
+              </div>
+              <div class="element-item" style="text-align: center; padding: 6px;">
+                <div style="font-size: 9.5px; text-transform: uppercase; font-weight: 800; color: var(--text-muted);">Peak VRAM</div>
+                <div style="font-size: 16px; font-weight: 900; color: var(--accent-orange); margin-top: 1px;" id="kpiEvalVram">2.2 GB</div>
+                <div style="font-size: 8.5px; color: var(--accent-orange); font-weight: 700;">Safe for 4GB RTX 3050</div>
+              </div>
             </div>
 
-            <!-- Tab 3: JSON -->
-            <div class="tab-content" id="tabJson">
-              <div style="display: flex; justify-content: flex-end; margin-bottom: 8px;">
-                <button class="neu-btn" style="padding: 4px 12px; font-size: 11px;" onclick="downloadJson()">Download JSON</button>
+            <!-- Multi-Engine Comparison Table -->
+            <div class="element-item" style="padding: 8px;">
+              <h4 style="font-size: 11px; font-weight: 800; margin-bottom: 6px; color: #1e293b;">Engine Benchmark Comparison</h4>
+              <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 10.5px; text-align: left;">
+                  <thead>
+                    <tr style="border-bottom: 2px solid #e2e8f0; color: var(--text-muted); font-size: 9.5px; text-transform: uppercase;">
+                      <th style="padding: 4px;">Engine Architecture</th>
+                      <th style="padding: 4px;">CER</th>
+                      <th style="padding: 4px;">WER</th>
+                      <th style="padding: 4px;">Macro F1</th>
+                      <th style="padding: 4px;">Latency</th>
+                      <th style="padding: 4px;">VRAM</th>
+                      <th style="padding: 4px;">Privacy</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr style="border-bottom: 1px solid #f1f5f9;">
+                      <td style="padding: 4px; font-weight: 700; color: #1e293b;">Docling Native Parser</td>
+                      <td style="padding: 4px; color: var(--accent-green); font-weight: 700;">1.0%</td>
+                      <td style="padding: 4px; color: var(--accent-blue); font-weight: 700;">1.8%</td>
+                      <td style="padding: 4px; font-weight: 700;">0.988</td>
+                      <td style="padding: 4px; color: var(--text-muted);">0.42s</td>
+                      <td style="padding: 4px; color: var(--text-muted);">0 MB</td>
+                      <td style="padding: 4px;"><span class="badge-status badge-completed" style="font-size: 8.5px; padding: 1px 5px;">100% Local</span></td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #f1f5f9;">
+                      <td style="padding: 4px; font-weight: 700; color: #1e293b;">GLM-OCR 0.9B VLM</td>
+                      <td style="padding: 4px; color: var(--accent-green); font-weight: 700;">1.6%</td>
+                      <td style="padding: 4px; color: var(--accent-blue); font-weight: 700;">3.2%</td>
+                      <td style="padding: 4px; font-weight: 700;">0.984</td>
+                      <td style="padding: 4px; color: var(--text-muted);">2.10s</td>
+                      <td style="padding: 4px; color: var(--accent-orange); font-weight: 700;">2200 MB</td>
+                      <td style="padding: 4px;"><span class="badge-status badge-completed" style="font-size: 8.5px; padding: 1px 5px;">100% Local</span></td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #f1f5f9;">
+                      <td style="padding: 4px; font-weight: 700; color: #1e293b;">TrOCR Handwriting Engine</td>
+                      <td style="padding: 4px; color: var(--accent-green); font-weight: 700;">2.8%</td>
+                      <td style="padding: 4px; color: var(--accent-blue); font-weight: 700;">5.2%</td>
+                      <td style="padding: 4px; font-weight: 700;">0.965</td>
+                      <td style="padding: 4px; color: var(--text-muted);">1.48s</td>
+                      <td style="padding: 4px; color: var(--text-muted);">650 MB</td>
+                      <td style="padding: 4px;"><span class="badge-status badge-completed" style="font-size: 8.5px; padding: 1px 5px;">100% Local</span></td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 4px; font-weight: 700; color: #1e293b;">PaddleOCR CPU Baseline</td>
+                      <td style="padding: 4px; color: var(--text-main); font-weight: 700;">4.3%</td>
+                      <td style="padding: 4px; color: var(--text-main); font-weight: 700;">7.1%</td>
+                      <td style="padding: 4px; font-weight: 700;">0.955</td>
+                      <td style="padding: 4px; color: var(--text-muted);">1.15s</td>
+                      <td style="padding: 4px; color: var(--text-muted);">0 MB</td>
+                      <td style="padding: 4px;"><span class="badge-status badge-completed" style="font-size: 8.5px; padding: 1px 5px;">100% Local</span></td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
-              <pre class="code-preview" id="jsonPreview">{ "status": "No document loaded" }</pre>
             </div>
 
-            <!-- Tab 4: Evaluation Benchmarks -->
-            <div class="tab-content" id="tabEval">
-              <div style="display: flex; flex-direction: column; gap: 14px; padding-bottom: 20px;">
-                <!-- Header Toolbar -->
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                  <div>
-                    <h3 style="font-size: 14px; font-weight: 800; color: #1e293b;">Automated Evaluation Engine</h3>
-                    <p style="font-size: 11px; color: var(--text-muted);">Empirical verification via jiwer Levenshtein distance, layout F1, and AST topology.</p>
-                  </div>
-                  <div style="display: flex; gap: 8px;">
-                    <a href="/codebase-graph" target="_blank" class="neu-btn" style="padding: 4px 10px; font-size: 11px; text-decoration: none; display: flex; align-items: center; gap: 4px; color: var(--text-main);" title="Open 2D AST Topology Explorer">
-                      <span>Interactive Graph</span>
-                      <span style="font-size: 10px;">↗</span>
-                    </a>
-                    <button class="neu-btn" id="btnRunEval" onclick="runLiveEvaluationSuite()" style="padding: 4px 12px; font-size: 11px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; font-weight: 700;">
-                      <span id="btnRunEvalText">Run Benchmark Suite</span>
-                    </button>
-                  </div>
-                </div>
-
-                <!-- 4 KPI Cards Grid -->
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
-                  <div class="neu-card" style="padding: 10px; box-shadow: var(--neu-flat-sm); text-align: center;">
-                    <div style="font-size: 10px; text-transform: uppercase; font-weight: 800; color: var(--text-muted); letter-spacing: 0.05em;">Mean CER</div>
-                    <div style="font-size: 18px; font-weight: 900; color: var(--accent-green); margin-top: 2px;" id="kpiEvalCer">1.6%</div>
-                    <div style="font-size: 9px; color: var(--accent-green); font-weight: 700;">Target &lt; 3.0% (98.4%)</div>
-                  </div>
-                  <div class="neu-card" style="padding: 10px; box-shadow: var(--neu-flat-sm); text-align: center;">
-                    <div style="font-size: 10px; text-transform: uppercase; font-weight: 800; color: var(--text-muted); letter-spacing: 0.05em;">Mean WER</div>
-                    <div style="font-size: 18px; font-weight: 900; color: var(--accent-blue); margin-top: 2px;" id="kpiEvalWer">3.4%</div>
-                    <div style="font-size: 9px; color: var(--accent-blue); font-weight: 700;">Target &lt; 5.0%</div>
-                  </div>
-                  <div class="neu-card" style="padding: 10px; box-shadow: var(--neu-flat-sm); text-align: center;">
-                    <div style="font-size: 10px; text-transform: uppercase; font-weight: 800; color: var(--text-muted); letter-spacing: 0.05em;">Layout F1</div>
-                    <div style="font-size: 18px; font-weight: 900; color: var(--accent-purple); margin-top: 2px;" id="kpiEvalF1">0.981</div>
-                    <div style="font-size: 9px; color: var(--accent-purple); font-weight: 700;">Macro Structure</div>
-                  </div>
-                  <div class="neu-card" style="padding: 10px; box-shadow: var(--neu-flat-sm); text-align: center;">
-                    <div style="font-size: 10px; text-transform: uppercase; font-weight: 800; color: var(--text-muted); letter-spacing: 0.05em;">Peak VRAM</div>
-                    <div style="font-size: 18px; font-weight: 900; color: var(--accent-orange); margin-top: 2px;" id="kpiEvalVram">2.2 GB</div>
-                    <div style="font-size: 9px; color: var(--accent-orange); font-weight: 700;">Safe for 4GB RTX 3050</div>
-                  </div>
-                </div>
-
-                <!-- Multi-Engine Comparison Table -->
-                <div class="neu-card" style="box-shadow: var(--neu-flat-sm); padding: 12px;">
-                  <h4 style="font-size: 12px; font-weight: 800; margin-bottom: 8px; color: #1e293b;">Engine Benchmark Comparison</h4>
-                  <div style="overflow-x: auto;">
-                    <table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: left;">
-                      <thead>
-                        <tr style="border-bottom: 2px solid #e2e8f0; color: var(--text-muted); font-size: 10px; text-transform: uppercase;">
-                          <th style="padding: 6px 4px;">Engine Architecture</th>
-                          <th style="padding: 6px 4px;">CER</th>
-                          <th style="padding: 6px 4px;">WER</th>
-                          <th style="padding: 6px 4px;">Macro F1</th>
-                          <th style="padding: 6px 4px;">Latency</th>
-                          <th style="padding: 6px 4px;">VRAM</th>
-                          <th style="padding: 6px 4px;">Privacy</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr style="border-bottom: 1px solid #f1f5f9;">
-                          <td style="padding: 6px 4px; font-weight: 700; color: #1e293b;">Docling Native Parser</td>
-                          <td style="padding: 6px 4px; color: var(--accent-green); font-weight: 700;">1.0%</td>
-                          <td style="padding: 6px 4px; color: var(--accent-blue); font-weight: 700;">1.8%</td>
-                          <td style="padding: 6px 4px; font-weight: 700;">0.988</td>
-                          <td style="padding: 6px 4px; color: var(--text-muted);">0.42s</td>
-                          <td style="padding: 6px 4px; color: var(--text-muted);">0 MB</td>
-                          <td style="padding: 6px 4px;"><span class="status-badge status-completed" style="font-size: 9px; padding: 1px 6px;">100% Local</span></td>
-                        </tr>
-                        <tr style="border-bottom: 1px solid #f1f5f9;">
-                          <td style="padding: 6px 4px; font-weight: 700; color: #1e293b;">GLM-OCR 0.9B VLM</td>
-                          <td style="padding: 6px 4px; color: var(--accent-green); font-weight: 700;">1.6%</td>
-                          <td style="padding: 6px 4px; color: var(--accent-blue); font-weight: 700;">3.2%</td>
-                          <td style="padding: 6px 4px; font-weight: 700;">0.984</td>
-                          <td style="padding: 6px 4px; color: var(--text-muted);">2.10s</td>
-                          <td style="padding: 6px 4px; color: var(--accent-orange); font-weight: 700;">2200 MB</td>
-                          <td style="padding: 6px 4px;"><span class="status-badge status-completed" style="font-size: 9px; padding: 1px 6px;">100% Local</span></td>
-                        </tr>
-                        <tr style="border-bottom: 1px solid #f1f5f9;">
-                          <td style="padding: 6px 4px; font-weight: 700; color: #1e293b;">TrOCR Handwriting Engine</td>
-                          <td style="padding: 6px 4px; color: var(--accent-green); font-weight: 700;">2.8%</td>
-                          <td style="padding: 6px 4px; color: var(--accent-blue); font-weight: 700;">5.2%</td>
-                          <td style="padding: 6px 4px; font-weight: 700;">0.965</td>
-                          <td style="padding: 6px 4px; color: var(--text-muted);">1.48s</td>
-                          <td style="padding: 6px 4px; color: var(--text-muted);">650 MB</td>
-                          <td style="padding: 6px 4px;"><span class="status-badge status-completed" style="font-size: 9px; padding: 1px 6px;">100% Local</span></td>
-                        </tr>
-                        <tr>
-                          <td style="padding: 6px 4px; font-weight: 700; color: #1e293b;">PaddleOCR CPU Baseline</td>
-                          <td style="padding: 6px 4px; color: var(--text-main); font-weight: 700;">4.3%</td>
-                          <td style="padding: 6px 4px; color: var(--text-main); font-weight: 700;">7.1%</td>
-                          <td style="padding: 6px 4px; font-weight: 700;">0.955</td>
-                          <td style="padding: 6px 4px; color: var(--text-muted);">1.15s</td>
-                          <td style="padding: 6px 4px; color: var(--text-muted);">0 MB</td>
-                          <td style="padding: 6px 4px;"><span class="status-badge status-completed" style="font-size: 9px; padding: 1px 6px;">100% Local</span></td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                <!-- Publication-Grade Seaborn Figures -->
-                <div style="display: flex; flex-direction: column; gap: 10px;">
-                  <div style="font-size: 12px; font-weight: 800; color: #1e293b;">300 DPI Publication-Grade Visualizations</div>
-                  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px;">
-                    <!-- Chart 1 -->
-                    <div class="neu-card" style="box-shadow: var(--neu-flat-sm); padding: 10px; display: flex; flex-direction: column; gap: 6px;">
-                      <div style="font-size: 11px; font-weight: 800; color: #334155;">CER &amp; WER Distribution (Boxplot)</div>
-                      <img id="evalChartCer" src="/static/samples/cer_wer_distribution.png" alt="CER WER Boxplot" style="width: 100%; border-radius: 6px; border: 1px solid #e2e8f0; cursor: pointer;" onclick="window.open(this.src, '_blank')" title="Click to view full resolution" />
-                    </div>
-                    <!-- Chart 2 -->
-                    <div class="neu-card" style="box-shadow: var(--neu-flat-sm); padding: 10px; display: flex; flex-direction: column; gap: 6px;">
-                      <div style="font-size: 11px; font-weight: 800; color: #334155;">Field-Level Layout F1 Scores</div>
-                      <img id="evalChartF1" src="/static/samples/field_f1_scores.png" alt="Field F1 Scores" style="width: 100%; border-radius: 6px; border: 1px solid #e2e8f0; cursor: pointer;" onclick="window.open(this.src, '_blank')" title="Click to view full resolution" />
-                    </div>
-                    <!-- Chart 3 -->
-                    <div class="neu-card" style="box-shadow: var(--neu-flat-sm); padding: 10px; display: flex; flex-direction: column; gap: 6px;">
-                      <div style="font-size: 11px; font-weight: 800; color: #334155;">Latency vs Recognition Accuracy &amp; VRAM</div>
-                      <img id="evalChartThroughput" src="/static/samples/latency_vs_accuracy.png" alt="Latency vs Accuracy" style="width: 100%; border-radius: 6px; border: 1px solid #e2e8f0; cursor: pointer;" onclick="window.open(this.src, '_blank')" title="Click to view full resolution" />
-                    </div>
-                  </div>
-                </div>
-
+            <!-- Publication Visualizations Grid -->
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+              <div class="element-item" style="padding: 6px;">
+                <div style="font-size: 10px; font-weight: 800; color: #334155; margin-bottom: 4px;">CER &amp; WER Boxplot</div>
+                <img id="evalChartCer" src="/static/samples/cer_wer_distribution.png" alt="CER WER Boxplot" style="width: 100%; border-radius: 6px; cursor: pointer;" onclick="window.open(this.src, '_blank')" />
+              </div>
+              <div class="element-item" style="padding: 6px;">
+                <div style="font-size: 10px; font-weight: 800; color: #334155; margin-bottom: 4px;">Field Layout F1</div>
+                <img id="evalChartF1" src="/static/samples/field_f1_scores.png" alt="Field F1 Scores" style="width: 100%; border-radius: 6px; cursor: pointer;" onclick="window.open(this.src, '_blank')" />
+              </div>
+              <div class="element-item" style="padding: 6px;">
+                <div style="font-size: 10px; font-weight: 800; color: #334155; margin-bottom: 4px;">Latency vs Accuracy</div>
+                <img id="evalChartThroughput" src="/static/samples/latency_vs_accuracy.png" alt="Latency vs Accuracy" style="width: 100%; border-radius: 6px; cursor: pointer;" onclick="window.open(this.src, '_blank')" />
               </div>
             </div>
 
           </div>
         </div>
-      </main>
+      </section>
     </div>
 
-    <!-- Collapsible Bottom History Drawer -->
-    <div class="neu-card history-drawer" id="historyDrawer">
+    <!-- Row 5: Collapsible Bottom History Drawer -->
+    <footer class="history-drawer" id="historyDrawer">
       <div class="drawer-header" onclick="toggleHistoryDrawer()">
         <div class="drawer-title">
-          <span style="font-size: 14px;">📂</span>
-          <span style="font-weight: 800; font-size: 12.5px; color: #1e293b;">Recent Ingested Documents</span>
-          <span class="badge-version" id="drawerDocCount" style="font-size: 10px; padding: 2px 7px;">0</span>
+          <span>📂</span>
+          <span style="font-weight: 800; font-size: 11.5px; color: #1e293b;">Recent Ingested Documents</span>
+          <span class="badge-version" id="drawerDocCount" style="font-size: 9.5px; padding: 1px 6px;">0</span>
         </div>
-        <div style="display: flex; gap: 8px; align-items: center;" onclick="event.stopPropagation()">
-          <button class="neu-btn" style="padding: 3px 10px; font-size: 10.5px;" onclick="loadRecentDocuments()">
-            🔄 Refresh
-          </button>
-          <button class="neu-btn" id="btnToggleDrawer" style="padding: 3px 10px; font-size: 10.5px;" onclick="toggleHistoryDrawer()">
-            ▲ Show Documents
-          </button>
+        <div style="display: flex; gap: 6px; align-items: center;" onclick="event.stopPropagation()">
+          <button class="neu-btn" style="padding: 2px 7px; font-size: 10px;" onclick="loadRecentDocuments()">🔄 Refresh</button>
+          <button class="neu-btn" id="btnToggleDrawer" style="padding: 2px 7px; font-size: 10px;" onclick="toggleHistoryDrawer()">▲ Show Documents</button>
         </div>
       </div>
       <div class="drawer-body" id="drawerBody" style="display: none;">
-        <div style="overflow-x: auto; max-height: 180px; overflow-y: auto;">
+        <div style="overflow-x: auto; max-height: 160px; overflow-y: auto;">
           <table class="history-table">
             <thead>
               <tr>
@@ -1431,9 +1352,8 @@
           </table>
         </div>
       </div>
-    </div>
-
-  </div>
+    </footer>
+  </main>
 
   <script>
     // State management
@@ -1449,8 +1369,8 @@
     let currentImage = null;
 
     // Element Filtering & Pagination State
-    let elementFilterScope = 'page'; // 'page' or 'all'
-    let elementFilterType = 'all';    // 'all', 'title', 'section_header', 'paragraph', 'list_item', 'table'
+    let elementFilterScope = 'page';
+    let elementFilterType = 'all';
     let elementPage = 1;
     const elementsPerPage = 5;
     const expandedTextIds = new Set();
@@ -1495,11 +1415,11 @@
       const feed = document.getElementById('thoughtFeed');
       const btn = document.getElementById('btnToggleThoughts');
       if (feed.style.display === 'none') {
-        feed.style.display = 'flex';
-        btn.textContent = 'Hide Thoughts ▲';
+        feed.style.display = 'block';
+        btn.textContent = 'Log ▲';
       } else {
         feed.style.display = 'none';
-        btn.textContent = 'Show Thoughts ▼';
+        btn.textContent = 'Log ▼';
       }
     }
 
@@ -1526,7 +1446,7 @@
         return `
           <div class="thought-item">
             <span class="thought-time">[${t.timestamp || ''}]</span>
-            <span style="font-size: 13px;">${icon}</span>
+            <span style="font-size: 12px;">${icon}</span>
             <span class="thought-title" style="color: ${color};">${escapeHtml(t.title)}:</span>
             <span class="thought-detail">${escapeHtml(t.detail || '')}</span>
           </div>
@@ -1553,13 +1473,11 @@
       btnStart.style.opacity = '0.7';
 
       // Reset thought console
-      const thoughtCard = document.getElementById('agentThoughtCard');
-      thoughtCard.style.display = 'block';
       document.getElementById('thoughtProgressBar').style.width = '15%';
       document.getElementById('thoughtProgressPercent').textContent = '15%';
       document.getElementById('thoughtStatusBadge').textContent = 'Triggering...';
-      document.getElementById('thoughtStatusBadge').style.background = '#e0f2fe';
-      document.getElementById('thoughtStatusBadge').style.color = '#0284c7';
+      document.getElementById('thoughtStatusBadge').style.background = '#e0e7ff';
+      document.getElementById('thoughtStatusBadge').style.color = '#4338ca';
 
       try {
         const resp = await fetch(`/api/v1/documents/${currentDocId}/process?engine=${encodeURIComponent(selectedModel)}`, {
@@ -1586,18 +1504,15 @@
       formData.append('file', file);
 
       const btnStart = document.getElementById('btnStartOcr');
-      btnStart.textContent = '⏳ Uploading & Processing...';
+      btnStart.textContent = '⏳ Uploading...';
       btnStart.style.opacity = '0.7';
 
-      // Open Agent Thought Card immediately
-      const thoughtCard = document.getElementById('agentThoughtCard');
-      thoughtCard.style.display = 'block';
       document.getElementById('thoughtProgressBar').style.width = '15%';
       document.getElementById('thoughtProgressPercent').textContent = '15%';
       const badge = document.getElementById('thoughtStatusBadge');
       badge.textContent = 'Uploading...';
-      badge.style.background = '#e0f2fe';
-      badge.style.color = '#0284c7';
+      badge.style.background = '#e0e7ff';
+      badge.style.color = '#4338ca';
 
       renderThoughts([
         {
@@ -1671,7 +1586,6 @@
         document.getElementById('activeDocMeta').textContent = 
           `${doc.mime_type.split('/')[1].toUpperCase()} · ${sizeKb} KB · ${currentDocTotalPages} ${currentDocTotalPages === 1 ? 'Page' : 'Pages'} · ID: ${doc.id.substring(0, 8)}`;
 
-        // Show action buttons
         const btnRaw = document.getElementById('btnDownloadRaw');
         btnRaw.style.display = 'inline-flex';
         btnRaw.href = `/api/v1/documents/${doc.id}/file`;
@@ -1681,22 +1595,14 @@
 
         updatePageNavigationUI();
 
-        // Render thoughts if returned on doc
         if (doc.thoughts && doc.thoughts.length) {
-          const thoughtCard = document.getElementById('agentThoughtCard');
-          thoughtCard.style.display = 'block';
           renderThoughts(doc.thoughts);
         }
 
-        // If document is pending or processing, poll status and live job thoughts
         if (doc.status === 'pending' || doc.status === 'processing') {
           badge.className = 'badge-status badge-processing';
           badge.textContent = doc.status === 'processing' ? '⏳ Processing OCR...' : '⏳ In Queue...';
 
-          const thoughtCard = document.getElementById('agentThoughtCard');
-          thoughtCard.style.display = 'block';
-
-          // Poll job progress and reasoning logs
           if (currentJobId) {
             try {
               const jobResp = await fetch(`/api/v1/jobs/${currentJobId}`);
@@ -1718,9 +1624,9 @@
 
           document.getElementById('elementsContainer').innerHTML = `
             <div class="empty-state">
-              <div style="font-size: 32px; margin-bottom: 12px; animation: pulse 1.2s infinite;">⚡</div>
-              <h4 style="color: #1e293b; font-size: 15px; margin-bottom: 6px;">Extracting Document Layout & Content</h4>
-              <p style="font-size: 12px;">Vision & OCR neural pipeline is actively analyzing text and coordinates.<br>Follow the live Chain-of-Thought reasoning above...</p>
+              <div style="font-size: 26px; margin-bottom: 8px; animation: pulse 1.2s infinite;">⚡</div>
+              <h4 style="color: #1e293b; font-size: 13px; margin-bottom: 4px;">Extracting Document Layout & Content</h4>
+              <p style="font-size: 11px;">Vision & OCR neural pipeline is actively analyzing text and coordinates.<br>Follow the live reasoning progress above...</p>
             </div>
           `;
           renderProcessingCanvas(doc.filename);
@@ -1728,10 +1634,7 @@
           return;
         }
 
-        // If completed, finalize thought progress and fetch elements
         if (doc.status === 'completed') {
-          const thoughtCard = document.getElementById('agentThoughtCard');
-          thoughtCard.style.display = 'block';
           document.getElementById('thoughtProgressBar').style.width = '100%';
           document.getElementById('thoughtProgressPercent').textContent = '100%';
           const statusBadge = document.getElementById('thoughtStatusBadge');
@@ -1741,8 +1644,6 @@
 
           await loadDocumentElementsAndArtifacts(docId);
         } else if (doc.status === 'failed') {
-          const thoughtCard = document.getElementById('agentThoughtCard');
-          thoughtCard.style.display = 'block';
           const statusBadge = document.getElementById('thoughtStatusBadge');
           statusBadge.textContent = 'Failed';
           statusBadge.style.background = '#fee2e2';
@@ -1750,9 +1651,9 @@
 
           document.getElementById('elementsContainer').innerHTML = `
             <div class="empty-state" style="color: #dc2626;">
-              <div style="font-size: 32px; margin-bottom: 12px;">⚠️</div>
+              <div style="font-size: 26px; margin-bottom: 8px;">⚠️</div>
               <h4>Extraction Encountered An Issue</h4>
-              <p style="font-size: 12px;">Click "Execute OCR & Extract Layout" to retry processing.</p>
+              <p style="font-size: 11px;">Click "Execute OCR & Extract Layout" to retry processing.</p>
             </div>
           `;
         }
@@ -1765,7 +1666,6 @@
     // Load extracted elements and artifacts
     async function loadDocumentElementsAndArtifacts(docId) {
       try {
-        // 1. Fetch real elements
         const elemResp = await fetch(`/api/v1/documents/${docId}/elements`);
         if (elemResp.ok) {
           detectedElements = await elemResp.json();
@@ -1773,7 +1673,6 @@
           updateElementsView();
         }
 
-        // 2. Fetch Markdown
         try {
           const mdResp = await fetch(`/api/v1/documents/${docId}/artifacts/document_md`);
           if (mdResp.ok) {
@@ -1782,7 +1681,6 @@
           }
         } catch (e) {}
 
-        // 3. Fetch JSON
         try {
           const jsonResp = await fetch(`/api/v1/documents/${docId}/artifacts/document_json`);
           if (jsonResp.ok) {
@@ -1791,7 +1689,6 @@
           }
         } catch (e) {}
 
-        // 4. Render Canvas with actual document page image
         renderPagePreview(docId, currentPage);
 
       } catch (e) {
@@ -1799,7 +1696,6 @@
       }
     }
 
-    // Render Canvas with page image and bounding box overlays
     function renderPagePreview(docId, pageNum) {
       const img = new Image();
       img.crossOrigin = 'anonymous';
@@ -1825,7 +1721,6 @@
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(currentImage, 0, 0, canvas.width, canvas.height);
       } else {
-        // Draw crisp paper document fallback
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.strokeStyle = '#cbd5e1';
@@ -1833,7 +1728,6 @@
         ctx.strokeRect(0, 0, canvas.width, canvas.height);
       }
 
-      // Draw bounding boxes strictly scaled for the current page
       drawBoundingBoxes(detectedElements);
     }
 
@@ -1846,7 +1740,7 @@
       ctx.strokeRect(0, 0, canvas.width, canvas.height);
 
       ctx.fillStyle = '#64748b';
-      ctx.font = 'bold 16px Plus Jakarta Sans';
+      ctx.font = 'bold 15px Plus Jakarta Sans';
       ctx.textAlign = 'center';
       ctx.fillText('⏳ Processing Document Layout...', canvas.width / 2, canvas.height / 2 - 20);
       ctx.font = '12px Plus Jakarta Sans';
@@ -1854,23 +1748,31 @@
       ctx.textAlign = 'start';
     }
 
-    // Scaled bounding boxes
+    // Bounding Box Coordinates Extractor
+    function getBboxCoords(elem) {
+      if (!elem || !elem.bbox) return null;
+      const b = elem.bbox;
+      if (Array.isArray(b)) {
+        return { x0: b[1], y0: b[0], x1: b[3], y1: b[2] };
+      }
+      return { x0: b.x0 ?? 0, y0: b.y0 ?? 0, x1: b.x1 ?? 0, y1: b.y1 ?? 0 };
+    }
+
+    // Scaled Bounding Boxes with Royal Violet Signature Palette
     function drawBoundingBoxes(elements) {
       if (!elements || !elements.length) return;
 
-      // Filter strictly to current page
       const pageElements = elements.filter(elem => {
         if (elem.page_number !== undefined && elem.page_number !== null) {
           return elem.page_number === currentPage;
         }
-        return true; // For demo/mock elements
+        return true;
       });
 
       pageElements.forEach(elem => {
         const b = getBboxCoords(elem);
         if (!b) return;
 
-        // Scale factors: PDF point coordinate space (typically ~595 x 842 pt) -> Canvas pixels (e.g. 1240 x 1754 px)
         const pageWidth = elem.page_width || (currentImage ? currentImage.naturalWidth || 595.32 : canvas.width);
         const pageHeight = elem.page_height || (currentImage ? currentImage.naturalHeight || 841.92 : canvas.height);
         const scaleX = canvas.width / pageWidth;
@@ -1885,14 +1787,14 @@
         ctx.lineWidth = isHovered ? 3 : 2;
 
         if (isHovered) {
-          ctx.strokeStyle = '#ff7644';
-          ctx.fillStyle = 'rgba(255, 118, 68, 0.28)';
+          ctx.strokeStyle = '#7c3aed';
+          ctx.fillStyle = 'rgba(124, 58, 237, 0.28)';
         } else if (elem.element_type === 'title') {
-          ctx.strokeStyle = '#ff7644';
-          ctx.fillStyle = 'rgba(255, 118, 68, 0.14)';
+          ctx.strokeStyle = '#6366f1';
+          ctx.fillStyle = 'rgba(99, 102, 241, 0.16)';
         } else if (elem.element_type === 'table') {
-          ctx.strokeStyle = '#00c9b7';
-          ctx.fillStyle = 'rgba(0, 201, 183, 0.14)';
+          ctx.strokeStyle = '#06b6d4';
+          ctx.fillStyle = 'rgba(6, 182, 212, 0.14)';
         } else if (elem.element_type === 'section_header') {
           ctx.strokeStyle = '#8b5cf6';
           ctx.fillStyle = 'rgba(139, 92, 246, 0.14)';
@@ -1901,15 +1803,14 @@
           ctx.fillStyle = 'rgba(245, 158, 11, 0.14)';
         } else {
           ctx.strokeStyle = '#3b82f6';
-          ctx.fillStyle = 'rgba(59, 130, 246, 0.11)';
+          ctx.fillStyle = 'rgba(59, 130, 246, 0.10)';
         }
 
         ctx.fillRect(x, y, w, h);
         ctx.strokeRect(x, y, w, h);
 
-        // Draw element badge tag above box if hovered or title/header
         if (isHovered || elem.element_type === 'title' || elem.element_type === 'section_header') {
-          ctx.fillStyle = isHovered ? '#ff7644' : '#1e293b';
+          ctx.fillStyle = isHovered ? '#7c3aed' : '#1e293b';
           ctx.font = 'bold 11px Plus Jakarta Sans';
           const tag = `#${(elem.reading_order || 0) + 1} ${(elem.element_type || 'elem').toUpperCase()}`;
           ctx.fillText(tag, x + 2, Math.max(12, y - 4));
@@ -1950,13 +1851,11 @@
       if (!detectedElements || !detectedElements.length) return [];
 
       return detectedElements.filter(elem => {
-        // Scope filter
         if (elementFilterScope === 'page') {
           const p = elem.page_number !== undefined && elem.page_number !== null ? elem.page_number : 1;
           if (p !== currentPage) return false;
         }
 
-        // Type filter
         if (elementFilterType !== 'all') {
           if (elem.element_type !== elementFilterType) return false;
         }
@@ -1974,7 +1873,6 @@
       if (elementPage < 1) elementPage = 1;
       if (elementPage > totalPages) elementPage = totalPages;
 
-      // Update Pagination Bars
       const startIdx = (elementPage - 1) * elementsPerPage;
       const endIdx = Math.min(startIdx + elementsPerPage, totalItems);
 
@@ -1986,7 +1884,6 @@
       document.getElementById('elemPageIndicator').textContent = `${elementPage} / ${totalPages}`;
       document.getElementById('elemPageIndicatorBtm').textContent = `${elementPage} / ${totalPages}`;
 
-      // Update button disabled states
       const prevDisabled = elementPage <= 1;
       const nextDisabled = elementPage >= totalPages;
 
@@ -2007,8 +1904,7 @@
       if (!totalItems) {
         container.innerHTML = `
           <div class="empty-state">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-            <p>No elements found for the selected scope or filter.<br>Switch to "All Pages" or reset the type filter.</p>
+            <p>No elements found for selected scope.<br>Switch to "All Pages" or reset the type filter.</p>
           </div>
         `;
         return;
@@ -2031,12 +1927,12 @@
         let textDisplay = '';
         let toggleButton = '';
 
-        if (rawText.length > 160) {
+        if (rawText.length > 150) {
           if (isExpanded) {
             textDisplay = escapeHtml(rawText);
             toggleButton = `<button class="neu-text-toggle" onclick="event.stopPropagation(); toggleExpandText('${elem.id}')">Show less ▲</button>`;
           } else {
-            textDisplay = escapeHtml(rawText.substring(0, 160)) + '...';
+            textDisplay = escapeHtml(rawText.substring(0, 150)) + '...';
             toggleButton = `<button class="neu-text-toggle" onclick="event.stopPropagation(); toggleExpandText('${elem.id}')">Show full text (${rawText.length} chars) ▼</button>`;
           }
         } else {
@@ -2050,10 +1946,10 @@
         div.innerHTML = `
           <div class="elem-meta">
             <div style="display: flex; gap: 6px; align-items: center;">
-              <span style="text-transform: uppercase; font-weight: 800; font-size: 10.5px;">#${(elem.reading_order || 0) + 1} · ${elem.element_type}</span>
+              <span style="text-transform: uppercase; font-weight: 800; font-size: 10px; color: var(--accent-violet);">#${(elem.reading_order || 0) + 1} · ${elem.element_type}</span>
               ${pageBadge}
             </div>
-            <span>Confidence: ${conf}%</span>
+            <span>Confidence: <strong>${conf}%</strong></span>
           </div>
           <div class="elem-well">
             <div class="elem-text">${textDisplay}</div>
@@ -2067,7 +1963,6 @@
         div.addEventListener('mouseenter', () => {
           hoveredElementId = elem.id;
           div.classList.add('active-focus');
-          // If element is on a different page and user is viewing all pages, jump to that page
           if (elem.page_number && elem.page_number !== currentPage) {
             changePageTo(elem.page_number);
           } else {
@@ -2083,16 +1978,6 @@
 
         container.appendChild(div);
       });
-    }
-
-    function escapeHtml(text) {
-      if (!text) return '';
-      return text
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
     }
 
     // Page navigation
@@ -2134,10 +2019,16 @@
       }
     }
 
-    // Delete Document permanently from database and folder storage
+    // Delete Document permanently
+    async function deleteActiveDocument() {
+      if (currentDocId && currentDocument) {
+        await deleteDocument(currentDocId, currentDocument.filename);
+      }
+    }
+
     async function deleteDocument(docId, filename) {
       const cleanName = filename || 'this document';
-      if (!confirm(`Are you sure you want to permanently delete "${cleanName}"?\n\nThis will remove the document, all extracted elements, JSON/Markdown data, and delete the physical uploaded files from your folder on disk.`)) {
+      if (!confirm(`Are you sure you want to permanently delete "${cleanName}"?\n\nThis will remove all extracted elements and data.`)) {
         return;
       }
 
@@ -2148,54 +2039,33 @@
 
         if (!resp.ok) {
           const err = await resp.json();
-          alert('Delete failed: ' + (err.detail || 'Could not delete document.'));
+          alert('Failed to delete document: ' + (err.detail || 'Server error'));
           return;
         }
 
-        // If currently viewing deleted document, reset view
         if (currentDocId === docId) {
           currentDocId = null;
           currentDocument = null;
-          resetViewerToDefault();
+          detectedElements = [];
+          document.getElementById('activeDocTitle').textContent = 'No Document Selected';
+          document.getElementById('activeDocBadge').className = 'badge-status badge-pending';
+          document.getElementById('activeDocBadge').textContent = '● standby';
+          document.getElementById('activeDocMeta').textContent = 'Select or upload a document to begin';
+          document.getElementById('btnDownloadRaw').style.display = 'none';
+          document.getElementById('btnDeleteActiveDoc').style.display = 'none';
+          document.getElementById('markdownPreview').textContent = '# Markdown preview will render here...';
+          document.getElementById('jsonPreview').textContent = '{ "status": "No document loaded" }';
+          currentImage = null;
+          redrawCanvas();
+          updateElementsView();
         }
 
         await loadRecentDocuments();
-      } catch (err) {
-        console.error(err);
-        alert('Network error deleting document.');
+      } catch (e) {
+        console.error(e);
       }
     }
 
-    function deleteActiveDocument() {
-      if (currentDocId && currentDocument) {
-        deleteDocument(currentDocId, currentDocument.filename);
-      }
-    }
-
-    function resetViewerToDefault() {
-      document.getElementById('activeDocTitle').textContent = 'Open Doc Intelligence';
-      const badge = document.getElementById('activeDocBadge');
-      badge.className = 'badge-status badge-completed';
-      badge.textContent = '● Ready';
-      document.getElementById('activeDocMeta').textContent = 'Upload a document or choose a sample to inspect extracted text blocks.';
-
-      document.getElementById('btnDownloadRaw').style.display = 'none';
-      document.getElementById('btnDeleteActiveDoc').style.display = 'none';
-
-      document.getElementById('markdownPreview').textContent = '# Markdown preview will render here...';
-      document.getElementById('jsonPreview').textContent = '{ "status": "No document loaded" }';
-
-      document.getElementById('elementsContainer').innerHTML = `
-        <div class="empty-state">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-          <p>Upload a document or choose a sample to inspect extracted text blocks, tables, and coordinates.</p>
-        </div>
-      `;
-
-      loadSampleInvoice();
-    }
-
-    // Trigger OCR Processing for a document
     async function triggerDocProcess(docId) {
       try {
         const resp = await fetch(`/api/v1/documents/${docId}/process?engine=${encodeURIComponent(selectedModel)}`, {
@@ -2212,20 +2082,21 @@
       }
     }
 
-    function triggerOcrProcess() {
-      if (currentDocId) {
-        triggerDocProcess(currentDocId);
-      } else {
-        alert('Please upload or select a document from the table first.');
-      }
-    }
-
     // Tab Switching
     function switchTab(tabName) {
       document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
 
-      event.target.classList.add('active');
+      if (event && event.target && event.target.classList.contains('tab-item')) {
+        event.target.classList.add('active');
+      } else {
+        const tabBtns = document.querySelectorAll('.tab-item');
+        if (tabName === 'elements' && tabBtns[0]) tabBtns[0].classList.add('active');
+        if (tabName === 'markdown' && tabBtns[1]) tabBtns[1].classList.add('active');
+        if (tabName === 'json' && tabBtns[2]) tabBtns[2].classList.add('active');
+        if (tabName === 'eval' && tabBtns[3]) tabBtns[3].classList.add('active');
+      }
+
       if (tabName === 'elements') document.getElementById('tabElements').classList.add('active');
       if (tabName === 'markdown') document.getElementById('tabMarkdown').classList.add('active');
       if (tabName === 'json') document.getElementById('tabJson').classList.add('active');
@@ -2322,7 +2193,7 @@
       }
     }
 
-    // Load Ingested Documents from API with Delete and Run OCR buttons
+    // Load Ingested Documents from API
     async function loadRecentDocuments() {
       try {
         const resp = await fetch('/api/v1/documents?limit=25');
@@ -2337,7 +2208,7 @@
         tbody.innerHTML = '';
 
         if (!data.items.length) {
-          tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">No documents ingested yet. Upload your first document above!</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 18px;">No documents ingested yet. Upload your first document above!</td></tr>';
           return;
         }
 
@@ -2355,31 +2226,30 @@
           tr.innerHTML = `
             <td>
               <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 16px;">📄</span>
+                <span style="font-size: 15px;">📄</span>
                 <div>
-                  <strong style="color: #1e293b; font-size: 13px;">${doc.filename}</strong>
-                  <div style="font-size: 10px; color: var(--text-muted);">${(doc.file_size_bytes / 1024).toFixed(1)} KB</div>
+                  <strong style="color: #1e293b; font-size: 12px;">${doc.filename}</strong>
+                  <div style="font-size: 9.5px; color: var(--text-muted);">${(doc.file_size_bytes / 1024).toFixed(1)} KB</div>
                 </div>
               </div>
             </td>
-            <td><code style="font-size: 11px;">${doc.file_hash.substring(0, 10)}...</code></td>
-            <td><span class="preset-chip" style="font-size: 10px; padding: 2px 8px;">${ext}</span></td>
+            <td><code style="font-size: 10px;">${doc.file_hash.substring(0, 10)}...</code></td>
+            <td><span class="preset-chip" style="font-size: 9.5px; padding: 1px 6px;">${ext}</span></td>
             <td>${doc.page_count || 1}</td>
             <td><span class="badge-status badge-${doc.status}">● ${doc.status}</span></td>
             <td>
               <div style="display: flex; gap: 4px; align-items: center;">
-                <button class="neu-btn" style="padding: 4px 10px; font-size: 11px;" onclick="loadDocumentDetails('${doc.id}')">Inspect</button>
+                <button class="neu-btn" style="padding: 2px 8px; font-size: 10.5px;" onclick="loadDocumentDetails('${doc.id}')">Inspect</button>
                 ${(doc.status === 'pending' || doc.status === 'failed') ? `
-                  <button class="neu-btn neu-btn-primary" style="padding: 4px 10px; font-size: 11px;" onclick="triggerDocProcess('${doc.id}')">▶ Run</button>
+                  <button class="neu-btn neu-btn-primary" style="padding: 2px 8px; font-size: 10.5px;" onclick="triggerDocProcess('${doc.id}')">▶ Run</button>
                 ` : ''}
-                <button class="neu-btn btn-delete" style="padding: 4px 10px; font-size: 11px;" title="Permanently delete document and data" onclick="deleteDocument('${doc.id}', '${safeName}')">🗑️</button>
+                <button class="neu-btn btn-delete" style="padding: 2px 8px; font-size: 10.5px;" title="Permanently delete document" onclick="deleteDocument('${doc.id}', '${safeName}')">🗑️</button>
               </div>
             </td>
           `;
           tbody.appendChild(tr);
         });
 
-        // If any jobs are currently processing, auto-refresh table every 2.5 seconds
         if (hasActiveJobs) {
           setTimeout(loadRecentDocuments, 2500);
         }
@@ -2387,16 +2257,6 @@
       } catch (e) {
         console.error(e);
       }
-    }
-
-    // Bounding Box Helper (supports both object and array formats)
-    function getBboxCoords(elem) {
-      if (!elem || !elem.bbox) return null;
-      const b = elem.bbox;
-      if (Array.isArray(b)) {
-        return { x0: b[1], y0: b[0], x1: b[3], y1: b[2] };
-      }
-      return { x0: b.x0 ?? 0, y0: b.y0 ?? 0, x1: b.x1 ?? 0, y1: b.y1 ?? 0 };
     }
 
     // Interactive Demo Sample Loader
@@ -2417,23 +2277,18 @@
         const badge = document.getElementById('activeDocBadge');
         badge.className = 'badge-status badge-completed';
         badge.textContent = '● completed';
-        document.getElementById('activeDocMeta').textContent = `Interactive Demo · ${sample.page_count} Pages · Engine: ${sample.engine} · Accuracy: ${(sample.accuracy * 100).toFixed(1)}%`;
+        document.getElementById('activeDocMeta').textContent = `Interactive Demo · ${sample.page_count} Pages · Engine: ${sample.engine}`;
         
-        // Show Agent Live Chain-of-Thought
-        const thoughtCard = document.getElementById('agentThoughtCard');
-        if (thoughtCard && sample.thoughts) {
-          thoughtCard.style.display = 'block';
+        if (sample.thoughts) {
           document.getElementById('thoughtProgressBar').style.width = '100%';
-          document.getElementById('thoughtPercent').textContent = '100%';
+          document.getElementById('thoughtProgressPercent').textContent = '100%';
           const badgeEl = document.getElementById('thoughtStatusBadge');
           badgeEl.textContent = 'COMPLETED';
-          badgeEl.className = 'badge-thought-status';
           badgeEl.style.background = '#dcfce7';
           badgeEl.style.color = '#15803d';
           renderThoughts(sample.thoughts);
         }
 
-        // Map elements
         detectedElements = sample.elements.map((el, idx) => {
           let b = el.bbox;
           let bboxObj = { x0: 0, y0: 0, x1: 100, y1: 100 };
@@ -2455,7 +2310,6 @@
           };
         });
 
-        // Load preview image onto canvas
         if (sample.image_url) {
           const img = new Image();
           img.crossOrigin = "anonymous";
@@ -2478,7 +2332,6 @@
           updateElementsView();
         }
 
-        // Update Markdown and JSON previews
         document.getElementById('markdownPreview').textContent = sample.markdown || '';
         document.getElementById('jsonPreview').textContent = JSON.stringify(sample.json_payload || sample, null, 2);
 
@@ -2493,15 +2346,6 @@
       document.getElementById('activeDocMeta').textContent = 'Demo Invoice Sample · 1 Page · Built-in Preset';
       renderDocumentPreview('Commercial Invoice #INV-2026-904');
       generateMockElementsForDemo('Commercial Invoice #INV-2026-904');
-    }
-    function loadSampleContract() {
-      document.getElementById('activeDocTitle').textContent = 'Non-Disclosure Agreement (NDA)';
-      document.getElementById('activeDocMeta').textContent = 'Demo Contract Sample · 1 Page · Built-in Preset';
-      renderDocumentPreview('Non-Disclosure Agreement (NDA)');
-      generateMockElementsForDemo('Non-Disclosure Agreement (NDA)');
-    }
-    function loadSampleResearch() {
-      loadInteractiveSample('research-paper');
     }
 
     function renderDocumentPreview(title) {
@@ -2548,70 +2392,82 @@
     function generateMockElementsForDemo(title) {
       detectedElements = [
         {
-          id: 'el-1',
+          id: 'demo-title',
           element_type: 'title',
           page_number: 1,
           page_width: 500,
           page_height: 680,
-          text: title || 'Executive Invoice Summary',
-          confidence: 0.99,
-          bbox: { x0: 35, y0: 40, x1: 450, y1: 70 },
+          text: title,
+          confidence: 0.994,
+          bbox: { x0: 40, y0: 38, x1: 420, y1: 70 },
           reading_order: 0
         },
         {
-          id: 'el-2',
+          id: 'demo-subtitle',
           element_type: 'paragraph',
           page_number: 1,
           page_width: 500,
           page_height: 680,
-          text: 'Open Doc Intelligence Grounded OCR & Spatial Extraction Pipeline with complete bounding box provenance tracking.',
-          confidence: 0.98,
-          bbox: { x0: 35, y0: 75, x1: 440, y1: 105 },
+          text: 'Open Doc Intelligence Grounded OCR & Spatial Extraction',
+          confidence: 0.988,
+          bbox: { x0: 40, y0: 75, x1: 440, y1: 100 },
           reading_order: 1
         },
         {
-          id: 'el-3',
+          id: 'demo-table',
           element_type: 'table',
           page_number: 1,
           page_width: 500,
           page_height: 680,
-          text: 'Table 1: Computational Resource Allocation & FOSS Licenses for local execution on Windows.',
-          confidence: 0.97,
-          bbox: { x0: 38, y0: 125, x1: 462, y1: 275 },
+          text: 'Table Grid [Item Description | Quantity | Total USD | Florence-2 Vision Inference | PaddleOCR Baseline]',
+          confidence: 0.975,
+          bbox: { x0: 40, y0: 130, x1: 460, y1: 270 },
           reading_order: 2
         }
       ];
-
-      currentDocTotalPages = 1;
-      currentPage = 1;
-      updatePageNavigationUI();
-      drawBoundingBoxes(detectedElements);
+      redrawCanvas();
       updateElementsView();
-
-      const md = `# ${title || 'Executive Invoice Summary'}\n\nOpen Doc Intelligence Grounded OCR & Spatial Extraction Pipeline\n\n| Item Description | Quantity | Total USD |\n| :--- | :--- | :--- |\n| Florence-2 Vision Inference | 1 unit | $0.00 (FOSS) |\n| PaddleOCR CPU Local Baseline | 1 unit | $0.00 (FOSS) |\n| Alembic & SQLite ORM | Active | Connected |\n`;
-      document.getElementById('markdownPreview').textContent = md;
-      document.getElementById('jsonPreview').textContent = JSON.stringify({
-        schema_version: "1.0.0",
-        document_id: 'demo-sample-001',
-        filename: title || 'sample_document.pdf',
-        elements: detectedElements,
-        metrics: { cer: 0.016, wer: 0.034, accuracy: 0.984 }
-      }, null, 2);
     }
 
-    // Fetch System Health
+    // Fetch System Health & Diagnostics
     async function fetchSystemHealth() {
       try {
         const resp = await fetch('/api/v1/doctor');
-        if (!resp.ok) return;
+        if (!resp.ok) return null;
         const data = await resp.json();
-        if (data.cuda_available && data.gpu_name) {
-          document.getElementById('kpiVram').textContent = `${(data.vram_total_mb / 1024).toFixed(1)} GB`;
+        const vramEl = document.getElementById('kpiVram');
+        if (vramEl) {
+          if (data.cuda_available && data.gpu_name) {
+            vramEl.textContent = `${(data.vram_total_mb / 1024).toFixed(1)} GB`;
+          } else {
+            vramEl.textContent = 'CPU (RAM)';
+          }
         }
-      } catch (e) {}
+        return data;
+      } catch (e) {
+        return null;
+      }
     }
 
-    // Interactive mouse hover on canvas: Find element box under cursor and highlight
+    async function showSystemHealthModal() {
+      const data = await fetchSystemHealth();
+      if (!data) {
+        alert('Could not retrieve system health from DocIntel API.');
+        return;
+      }
+      const gpuInfo = data.cuda_available ? `${data.gpu_name} (${(data.vram_total_mb / 1024).toFixed(1)} GB VRAM)` : 'CPU Mode (Local Fallback)';
+      const msg = `DocIntel Diagnostics & System Health:\n` +
+        `-----------------------------------------\n` +
+        `• Status: ${data.status.toUpperCase()} 🟢\n` +
+        `• Operating System: ${data.os}\n` +
+        `• Python Runtime: ${data.python_version}\n` +
+        `• Compute Hardware: ${gpuInfo}\n` +
+        `• Disk Storage Free: ${data.disk_free_gb.toFixed(1)} GB\n` +
+        `• Privacy Guarantee: 100% Local (Zero Cloud Telemetry)`;
+      alert(msg);
+    }
+
+    // Interactive mouse hover on canvas
     canvas.addEventListener('mousemove', (e) => {
       const rect = canvas.getBoundingClientRect();
       const mouseX = (e.clientX - rect.left) * (canvas.width / rect.width);

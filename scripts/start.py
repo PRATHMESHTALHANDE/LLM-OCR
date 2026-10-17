@@ -13,6 +13,16 @@ root_dir = Path(__file__).resolve().parent.parent
 if str(root_dir) not in sys.path:
     sys.path.insert(0, str(root_dir))
 
+# Auto-switch to project .venv if launched using global system python
+venv_python = root_dir / ".venv" / "Scripts" / "python.exe"
+if not venv_python.exists():
+    venv_python = root_dir / ".venv" / "bin" / "python"
+
+if venv_python.exists() and Path(sys.executable).resolve() != venv_python.resolve():
+    print(f"[BOOT] Switching to project virtual environment: {venv_python.relative_to(root_dir)}")
+    res = subprocess.run([str(venv_python)] + sys.argv)
+    sys.exit(res.returncode)
+
 from alembic import command
 from alembic.config import Config
 import uvicorn
